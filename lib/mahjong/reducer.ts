@@ -100,6 +100,7 @@ export function createInitialState(config: InitialStateConfig): GameState {
     lastDrawWasReplacement: false,
     winners: null,
     isDraw: false,
+    lastDiscard: null,
   };
 }
 
@@ -241,7 +242,7 @@ function handleDiscard(state: GameState, tileId: string): GameState {
     concealedTiles: player.concealedTiles.filter((t) => t.id !== tileId),
     discards: [...player.discards, tile],
   });
-  next = { ...next, lastDrawWasReplacement: false };
+  next = { ...next, lastDrawWasReplacement: false, lastDiscard: { tile, seat } };
 
   const eligibleSeats = otherSeats(seat).filter((s) => hasAnyCallOption(next, s, tile, seat));
   if (eligibleSeats.length === 0) {

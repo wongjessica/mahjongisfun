@@ -1,64 +1,86 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
+import { TileFace } from "@/components/tiles/TileFace";
+import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
+import { CenterTable } from "./CenterTable";
 import { PlayerPanel } from "./PlayerPanel";
-import { WallCounter } from "./WallCounter";
-
-const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
 export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
-  useBotDriver();
+  const thinkingSeat = useBotDriver();
   const { state, humanSeat } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
 
-  const opponentSeats = [0, 1, 2, 3].filter((seat) => seat !== humanSeat);
+  const rightSeat = nextSeat(humanSeat);
+  const topSeat = nextSeat(rightSeat);
+  const leftSeat = nextSeat(topSeat);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {opponentSeats.map((seat) => (
-          <PlayerPanel key={seat} seat={seat} isHuman={false} />
-        ))}
-      </div>
+    <div className="mx-auto flex max-w-5xl flex-col gap-3 p-3 sm:p-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1.4fr_1fr] sm:items-start">
+        <div className="order-3 sm:order-1">
+          <PlayerPanel seat={leftSeat} isHuman={false} isThinking={thinkingSeat === leftSeat} compact />
+        </div>
 
-      <div className="flex items-center justify-center gap-6 rounded-lg bg-gray-800 py-3 text-white">
-        <WallCounter state={state} />
-        <div className="text-sm">
-          Round Wind: {WIND_NAMES[state.roundWind]} · {state.ruleset.fanMinimum}-fan minimum
+        <div className="order-1 flex flex-col gap-2 sm:order-2">
+          <PlayerPanel seat={topSeat} isHuman={false} isThinking={thinkingSeat === topSeat} compact />
+          <CenterTable />
+        </div>
+
+        <div className="order-4 sm:order-3">
+          <PlayerPanel seat={rightSeat} isHuman={false} isThinking={thinkingSeat === rightSeat} compact />
         </div>
       </div>
 
-      {state.turn.phase === "round-ended" && (
-        <div className="rounded-lg border border-emerald-400 bg-emerald-50 p-4 text-center">
-          {state.isDraw ? (
-            <p className="font-semibold text-emerald-800">Wall exhausted — no winner this round.</p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {state.winners?.map((winner) => (
-                <p key={winner.seat} className="font-semibold text-emerald-800">
-                  {winner.seat === humanSeat ? "You" : `Bot ${winner.seat}`} won with {winner.fan} fan
-                  {" "}({winner.breakdown.map((b) => b.label).join(", ")})
-                </p>
-              ))}
-            </div>
-          )}
-          <button
-            onClick={onNewGame}
-            className="mt-3 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+      <AnimatePresence>
+        {state.turn.phase === "round-ended" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 350, damping: 26 }}
+            className="rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 p-4 text-center shadow-lg"
           >
-            New Game
-          </button>
-        </div>
-      )}
+            {state.isDraw ? (
+              <p className="font-semibold text-amber-900">Wall exhausted — no winner this round.</p>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                {state.winners?.map((winner) => (
+                  <div key={winner.seat} className="flex items-center gap-3">
+                    <TileFace tile={winner.wonTile} size="md" animateIn={false} />
+                    <div className="text-left">
+                      <p className="font-bold text-amber-900">
+                        {winner.seat === humanSeat ? "You" : "Bot"} won with {winner.fan} fan
+                        {winner.selfDraw ? " (self-draw)" : ""}
+                      </p>
+                      <p className="text-xs text-amber-700">
+                        {winner.breakdown.map((b) => `${b.label} (${b.fan})`).join(" · ")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={onNewGame}
+              className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
+            >
+              New Game
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PlayerPanel
         seat={humanSeat}
         isHuman
         selectedTileId={selectedTileId}
         onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
+        handSize="lg"
       />
 
       <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />

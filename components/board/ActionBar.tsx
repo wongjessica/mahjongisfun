@@ -1,13 +1,16 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { LegalAction, toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 
-const btnPrimary = "rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700";
-const btnSecondary = "rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white hover:bg-amber-600";
-const btnWin = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700";
-const btnGhost = "rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50";
+const btnBase =
+  "rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors active:scale-[0.97]";
+const btnPrimary = `${btnBase} bg-blue-600 text-white hover:bg-blue-700`;
+const btnSecondary = `${btnBase} bg-amber-500 text-white hover:bg-amber-600`;
+const btnWin = `${btnBase} bg-emerald-600 text-white hover:bg-emerald-700`;
+const btnGhost = `${btnBase} border border-slate-300 bg-white text-slate-600 hover:bg-slate-50`;
 
 interface ActionBarProps {
   selectedTileId: string | null;
@@ -24,7 +27,11 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   };
 
   if (legal.length === 0) {
-    return <div className="p-2 text-sm text-gray-400">Waiting for other players…</div>;
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/70 p-3 text-center text-sm text-slate-400">
+        Waiting for other players…
+      </div>
+    );
   }
 
   const drawAction = legal.find((a) => a.type === "DRAW");
@@ -42,25 +49,28 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
+    <motion.div
+      layout
+      className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
+    >
       {drawAction && (
         <button className={btnPrimary} onClick={() => dispatchAction(drawAction)}>
-          Draw
+          🀫 Draw
         </button>
       )}
       {replaceAction && (
         <button className={btnPrimary} onClick={() => dispatchAction(replaceAction)}>
-          Reveal flower &amp; draw replacement
+          🌸 Reveal flower &amp; draw
         </button>
       )}
       {discardForSelected && (
         <button className={btnPrimary} onClick={() => dispatchAction(discardForSelected)}>
-          Discard selected tile
+          Discard
         </button>
       )}
       {winAction && (
         <button className={btnWin} onClick={() => dispatchAction(winAction)}>
-          Declare Win
+          🏆 Declare Win
         </button>
       )}
       {ponAction && (
@@ -87,8 +97,8 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
         !replaceAction &&
         !discardForSelected &&
         legal.some((a) => a.type === "DISCARD") && (
-          <span className="text-sm text-gray-400">Select a tile to discard</span>
+          <span className="text-sm text-slate-400">Tap a tile above to discard it</span>
         )}
-    </div>
+    </motion.div>
   );
 }

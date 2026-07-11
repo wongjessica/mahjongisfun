@@ -20,14 +20,14 @@ export default function Home() {
 
   if (!initialState) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] p-4">
         <SetupForm onStart={startGame} />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-6">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] py-6">
       <GameProvider key={gameKey} initialState={initialState} humanSeat={HUMAN_SEAT}>
         <GameBoard onNewGame={() => setInitialState(null)} />
       </GameProvider>

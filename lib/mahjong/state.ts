@@ -69,6 +69,9 @@ export interface GameState {
   lastDrawWasReplacement: boolean;
   winners: WinResult[] | null;
   isDraw: boolean;
+  /** Most recent discard across all seats, purely for UI display (e.g. a
+   * center-of-table callout) -- not read by any rules logic. */
+  lastDiscard: { tile: Tile; seat: number } | null;
 }
 
 export function otherSeats(seat: number): number[] {
