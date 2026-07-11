@@ -52,7 +52,7 @@ function resolvePlayerFlowers(
     if (bonusTiles.length === 0) break;
     tiles = tiles.filter((t) => !isBonus(t));
     flowers = [...flowers, ...bonusTiles];
-    for (const _ of bonusTiles) {
+    for (let i = 0; i < bonusTiles.length; i++) {
       if (!hasReplacementTile(currentWall)) break;
       const { tile, wall: nextWall } = drawReplacement(currentWall);
       currentWall = nextWall;
