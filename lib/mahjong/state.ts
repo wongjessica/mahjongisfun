@@ -34,10 +34,15 @@ export interface CallResponse {
 
 export interface PendingCallWindow {
   discardedTile: Tile;
+  /** The seat whose action opened this window -- a real discarder, or (when
+   * winOnly is true) the seat that just declared an added kong. */
   discardingSeat: number;
   /** Seats still eligible to respond (not yet passed or preempted). */
   eligibleSeats: number[];
   responses: Partial<Record<number, CallResponse>>;
+  /** True for a "robbing the kong" window: only DECLARE_WIN/PASS are legal,
+   * no chi/pon/kong may be called on an added-kong tile. */
+  winOnly: boolean;
 }
 
 export interface WinResult {
