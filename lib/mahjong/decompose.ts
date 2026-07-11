@@ -1,5 +1,6 @@
 import { Meld } from "./melds";
-import { SUIT_TYPES, SuitType, Tile, TileSuit, groupByKey, tileKey } from "./tiles";
+import { TILE_TYPES, isSuitType, typeIndexOf } from "./tile-index";
+import { Tile, TileSuit, groupByKey, tileKey } from "./tiles";
 
 export type DecompositionKind = "standard" | "sevenPairs" | "thirteenOrphans";
 export type SetGroupKind = "triplet" | "sequence" | "pair" | "single";
@@ -22,26 +23,6 @@ interface TileType {
   rank: number;
 }
 
-const TILE_TYPES: TileType[] = (() => {
-  const types: TileType[] = [];
-  for (const suit of SUIT_TYPES) {
-    for (let rank = 1; rank <= 9; rank++) types.push({ suit, rank });
-  }
-  for (let rank = 1; rank <= 4; rank++) types.push({ suit: "winds", rank });
-  for (let rank = 1; rank <= 3; rank++) types.push({ suit: "dragons", rank });
-  return types;
-})();
-
-const TYPE_INDEX = new Map<string, number>(
-  TILE_TYPES.map((t, i) => [tileKey(t), i])
-);
-
-function typeIndexOf(tile: Tile): number {
-  const idx = TYPE_INDEX.get(tileKey(tile));
-  if (idx === undefined) throw new Error(`Unknown tile type: ${tileKey(tile)}`);
-  return idx;
-}
-
 const ORPHAN_TYPES: TileType[] = [
   { suit: "characters", rank: 1 },
   { suit: "characters", rank: 9 },
@@ -57,10 +38,6 @@ const ORPHAN_TYPES: TileType[] = [
   { suit: "dragons", rank: 2 },
   { suit: "dragons", rank: 3 },
 ];
-
-function isSuitType(suit: TileSuit): suit is SuitType {
-  return (SUIT_TYPES as TileSuit[]).includes(suit);
-}
 
 function backtrack(
   counts: number[],

@@ -1,5 +1,6 @@
 import { Decomposition } from "../decompose";
-import { SUIT_TYPES, SuitType, Tile, TileSuit } from "../tiles";
+import { isSuitType } from "../tile-index";
+import { Tile, TileSuit } from "../tiles";
 import { Wind } from "../state";
 import { Ruleset } from "./ruleset";
 
@@ -33,10 +34,6 @@ export type FanPattern = (
   ctx: ScoringContext
 ) => FanEntry | null;
 
-function isSuited(suit: TileSuit): suit is SuitType {
-  return (SUIT_TYPES as TileSuit[]).includes(suit);
-}
-
 export function unify(decomposition: Decomposition): UnifiedSet[] {
   const fromConcealed: UnifiedSet[] = decomposition.concealedGroups.map((g) => ({
     kind: g.kind,
@@ -60,8 +57,8 @@ export function unify(decomposition: Decomposition): UnifiedSet[] {
 const flushPattern: FanPattern = (sets, decomposition) => {
   if (decomposition.kind === "thirteenOrphans") return null;
   const suits = new Set(sets.map((s) => s.suit));
-  const suitedSuits = [...suits].filter(isSuited);
-  const hasHonor = [...suits].some((s) => !isSuited(s));
+  const suitedSuits = [...suits].filter(isSuitType);
+  const hasHonor = [...suits].some((s) => !isSuitType(s));
   if (suitedSuits.length === 1 && !hasHonor) return { label: "Full Flush", fan: 7 };
   if (suitedSuits.length === 1 && hasHonor) return { label: "Half Flush", fan: 3 };
   return null;
@@ -78,7 +75,7 @@ const allTripletsPattern: FanPattern = (sets, decomposition) => {
 
 const allHonorsPattern: FanPattern = (sets, decomposition) => {
   if (decomposition.kind !== "standard") return null;
-  if (sets.every((s) => !isSuited(s.suit))) return { label: "All Honors", fan: 10 };
+  if (sets.every((s) => !isSuitType(s.suit))) return { label: "All Honors", fan: 10 };
   return null;
 };
 
