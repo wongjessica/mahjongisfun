@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
-import { TileFace, TileSize } from "@/components/tiles/TileFace";
+import { TileFace, TileSize, tileLabel } from "@/components/tiles/TileFace";
 import { Meld } from "@/lib/mahjong/melds";
 import { sortTiles } from "@/lib/mahjong/tiles";
 
@@ -84,8 +84,6 @@ export function PlayerPanel({
   const player = state.players[seat];
   const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
   const isDealer = state.dealerIndex === seat;
-  const lastDiscardId =
-    state.lastDiscard && state.lastDiscard.seat === seat ? state.lastDiscard.tile.id : null;
 
   const showDrawnSeparately = isHuman && state.lastDraw?.seat === seat && isActive;
   const drawnTileId = showDrawnSeparately ? state.lastDraw!.tile.id : null;
@@ -155,28 +153,6 @@ export function PlayerPanel({
         </div>
       )}
 
-      {/* Discard pile: always shown in full for every seat -- this is the
-          core tile-counting information mahjong strategy depends on. */}
-      <div className="min-h-[3rem] rounded-md bg-black/5 p-1.5">
-        {player.discards.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            <AnimatePresence>
-              {player.discards.map((tile) => (
-                <TileFace
-                  key={tile.id}
-                  tile={tile}
-                  size="sm"
-                  layoutId={tile.id}
-                  highlight={tile.id === lastDiscardId}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-400">No discards yet</span>
-        )}
-      </div>
-
       {isHuman ? (
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-wrap gap-1">
@@ -214,6 +190,9 @@ export function PlayerPanel({
                   onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
                   highlight
                 />
+                <span className="text-[9px] font-medium text-amber-700">
+                  {tileLabel(state.lastDraw!.tile)}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>

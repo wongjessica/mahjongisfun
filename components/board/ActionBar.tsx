@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { LegalAction, toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
+import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 
 const btnBase =
-  "rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors active:scale-[0.97]";
-const btnPrimary = `${btnBase} bg-blue-600 text-white hover:bg-blue-700`;
-const btnSecondary = `${btnBase} bg-amber-500 text-white hover:bg-amber-600`;
-const btnWin = `${btnBase} bg-emerald-600 text-white hover:bg-emerald-700`;
+  "flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.96]";
+const btnSecondary = `${btnBase} bg-gradient-to-b from-amber-400 to-amber-500 text-white shadow-amber-900/20 hover:from-amber-400 hover:to-amber-600`;
+const btnWin = `${btnBase} bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-emerald-900/30 hover:from-emerald-400 hover:to-emerald-600`;
 const btnGhost = `${btnBase} border border-slate-300 bg-white text-slate-600 hover:bg-slate-50`;
 
 interface ActionBarProps {
@@ -38,12 +38,21 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   // dispatches it automatically, so no button is needed for either.
   if (legal.length === 1 && (legal[0].type === "DRAW" || legal[0].type === "REPLACE_FLOWER")) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/70 p-3 text-center text-sm text-slate-400">
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/70 p-3 text-center text-sm text-slate-400">
+        <motion.span
+          className="h-1.5 w-1.5 rounded-full bg-slate-400"
+          animate={{ opacity: [0.3, 1, 0.3] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        />
         Drawing…
       </div>
     );
   }
 
+  const player = state.players[humanSeat];
+  const selectedTile = selectedTileId
+    ? player.concealedTiles.find((t) => t.id === selectedTileId)
+    : undefined;
   const discardForSelected = selectedTileId
     ? legal.find((a) => a.type === "DISCARD" && a.tileId === selectedTileId)
     : undefined;
@@ -61,35 +70,76 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
       layout
       className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
     >
-      {discardForSelected && (
-        <button className={btnPrimary} onClick={() => dispatchAction(discardForSelected)}>
-          Discard
-        </button>
+      {discardForSelected && selectedTile && (
+        <motion.button
+          layout
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => dispatchAction(discardForSelected)}
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 py-1.5 pl-1.5 pr-4 text-white shadow-lg shadow-blue-900/30 transition-colors hover:from-blue-500 hover:to-blue-700"
+        >
+          <TileFace tile={selectedTile} size="sm" animateIn={false} />
+          <span className="flex flex-col items-start leading-tight">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+              Discard
+            </span>
+            <span className="text-sm font-bold">{tileLabel(selectedTile)}</span>
+          </span>
+        </motion.button>
       )}
       {winAction && (
-        <button className={btnWin} onClick={() => dispatchAction(winAction)}>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          className={btnWin}
+          onClick={() => dispatchAction(winAction)}
+        >
           🏆 Declare Win
-        </button>
+        </motion.button>
       )}
       {ponAction && (
-        <button className={btnSecondary} onClick={() => dispatchAction(ponAction)}>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          className={btnSecondary}
+          onClick={() => dispatchAction(ponAction)}
+        >
           Pon
-        </button>
+        </motion.button>
       )}
       {kongActions.map((action, i) => (
-        <button key={i} className={btnSecondary} onClick={() => dispatchAction(action)}>
+        <motion.button
+          key={i}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          className={btnSecondary}
+          onClick={() => dispatchAction(action)}
+        >
           Kong
-        </button>
+        </motion.button>
       ))}
       {chiActions.map((action, i) => (
-        <button key={i} className={btnSecondary} onClick={() => dispatchAction(action)}>
+        <motion.button
+          key={i}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          className={btnSecondary}
+          onClick={() => dispatchAction(action)}
+        >
           Chi
-        </button>
+        </motion.button>
       ))}
       {passAction && (
-        <button className={btnGhost} onClick={() => dispatchAction(passAction)}>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          className={btnGhost}
+          onClick={() => dispatchAction(passAction)}
+        >
           Pass
-        </button>
+        </motion.button>
       )}
       {!discardForSelected && legal.some((a) => a.type === "DISCARD") && (
         <span className="text-sm text-slate-400">Tap a tile above to discard it</span>

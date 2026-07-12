@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
-import { TileFace } from "@/components/tiles/TileFace";
+import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
@@ -40,6 +40,9 @@ export function CenterTable() {
                 discarded
               </span>
               <TileFace tile={lastDiscard.tile} size="lg" animateIn={false} />
+              <span className="text-[11px] font-semibold text-amber-300">
+                {tileLabel(lastDiscard.tile)}
+              </span>
             </motion.div>
           ) : (
             <motion.span

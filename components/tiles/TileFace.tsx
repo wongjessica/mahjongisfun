@@ -46,6 +46,38 @@ export function tileImageSrc(tile: Pick<Tile, "suit" | "rank">): string {
   return `/tiles/${tileImageFile(tile)}.svg`;
 }
 
+const WIND_LABELS: Record<number, string> = {
+  1: "East Wind",
+  2: "South Wind",
+  3: "West Wind",
+  4: "North Wind",
+};
+const DRAGON_LABELS: Record<number, string> = { 1: "Red Dragon", 2: "Green Dragon", 3: "White Dragon" };
+const FLOWER_LABELS: Record<number, string> = { 1: "Plum", 2: "Orchid", 3: "Chrysanthemum", 4: "Bamboo Flower" };
+const SEASON_LABELS: Record<number, string> = { 1: "Spring", 2: "Summer", 3: "Autumn", 4: "Winter" };
+
+/** Plain-English name for a tile, e.g. "3 Characters", "Red Dragon",
+ * "East Wind" -- used as always-visible captions in the discard board and
+ * as a native tooltip everywhere else, so a non-expert can follow along. */
+export function tileLabel(tile: Pick<Tile, "suit" | "rank">): string {
+  switch (tile.suit) {
+    case "characters":
+      return `${tile.rank} Characters`;
+    case "dots":
+      return `${tile.rank} Dots`;
+    case "bamboo":
+      return `${tile.rank} Bamboo`;
+    case "winds":
+      return WIND_LABELS[tile.rank];
+    case "dragons":
+      return DRAGON_LABELS[tile.rank];
+    case "flowers":
+      return FLOWER_LABELS[tile.rank];
+    case "seasons":
+      return SEASON_LABELS[tile.rank];
+  }
+}
+
 const SIZE_CONFIG = {
   sm: { w: 30, h: 42 },
   md: { w: 44, h: 62 },
@@ -82,26 +114,32 @@ export function TileFace({
   const { w, h } = SIZE_CONFIG[size];
   const isBack = faceDown || !tile;
 
+  // Only a genuinely clickable tile should be a <button> -- a decorative
+  // tile (e.g. composited into the ActionBar's discard preview button) must
+  // render as a <div>, since nesting <button> inside <button> is invalid
+  // HTML and breaks hydration.
+  const Wrapper = onClick ? motion.button : motion.div;
+
+  const sharedProps = {
+    title: tile ? tileLabel(tile) : undefined,
+    layout: true,
+    layoutId,
+    initial: animateIn ? { opacity: 0, y: -14, scale: 0.85 } : false,
+    animate: { opacity: 1, y: selected ? -10 : 0, scale: 1 },
+    exit: { opacity: 0, scale: 0.55, y: 12 },
+    whileHover: onClick ? { y: -6 } : undefined,
+    whileTap: onClick ? { scale: 0.94 } : undefined,
+    transition: { type: "spring" as const, stiffness: 480, damping: 30 },
+    style: { width: w, height: h },
+    className: `relative shrink-0 select-none rounded-[6px] border ${
+      selected ? "border-blue-500" : isBack ? "border-red-950/50" : "border-black/10"
+    } ${onClick ? "cursor-pointer" : "cursor-default"} ${
+      selected ? "shadow-[0_8px_16px_rgba(37,99,235,0.35)]" : "shadow-[0_2px_3px_rgba(0,0,0,0.2)]"
+    } ${highlight ? "ring-2 ring-amber-400 ring-offset-1 ring-offset-emerald-900" : ""}`,
+  };
+
   return (
-    <motion.button
-      type="button"
-      layout
-      layoutId={layoutId}
-      onClick={onClick}
-      disabled={!onClick}
-      initial={animateIn ? { opacity: 0, y: -14, scale: 0.85 } : false}
-      animate={{ opacity: 1, y: selected ? -10 : 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.55, y: 12 }}
-      whileHover={onClick ? { y: -6 } : undefined}
-      whileTap={onClick ? { scale: 0.94 } : undefined}
-      transition={{ type: "spring", stiffness: 480, damping: 30 }}
-      style={{ width: w, height: h }}
-      className={`relative shrink-0 select-none rounded-[6px] border ${
-        selected ? "border-blue-500" : isBack ? "border-red-950/50" : "border-black/10"
-      } ${onClick ? "cursor-pointer" : "cursor-default"} ${
-        selected ? "shadow-[0_8px_16px_rgba(37,99,235,0.35)]" : "shadow-[0_2px_3px_rgba(0,0,0,0.2)]"
-      } ${highlight ? "ring-2 ring-amber-400 ring-offset-1 ring-offset-emerald-900" : ""}`}
-    >
+    <Wrapper {...sharedProps} {...(onClick ? { type: "button", onClick } : {})}>
       {isBack ? (
         <div
           className="h-full w-full rounded-[5px]"
@@ -129,6 +167,6 @@ export function TileFace({
           />
         </div>
       )}
-    </motion.button>
+    </Wrapper>
   );
 }

@@ -5,10 +5,11 @@ import { useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
-import { TileFace } from "@/components/tiles/TileFace";
+import { LabeledTile } from "@/components/tiles/LabeledTile";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
+import { DiscardBoard } from "./DiscardBoard";
 import { PlayerPanel } from "./PlayerPanel";
 
 export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
@@ -38,6 +39,8 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
         </div>
       </div>
 
+      <DiscardBoard />
+
       <AnimatePresence>
         {state.turn.phase === "round-ended" && (
           <motion.div
@@ -53,7 +56,7 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
               <div className="flex flex-col items-center gap-3">
                 {state.winners?.map((winner) => (
                   <div key={winner.seat} className="flex items-center gap-3">
-                    <TileFace tile={winner.wonTile} size="md" animateIn={false} />
+                    <LabeledTile tile={winner.wonTile} size="md" animateIn={false} />
                     <div className="text-left">
                       <p className="font-bold text-amber-900">
                         {winner.seat === humanSeat ? "You" : "Bot"} won with {winner.fan} fan
