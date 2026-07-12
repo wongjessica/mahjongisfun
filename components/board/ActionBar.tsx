@@ -34,8 +34,16 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
     );
   }
 
-  const drawAction = legal.find((a) => a.type === "DRAW");
-  const replaceAction = legal.find((a) => a.type === "REPLACE_FLOWER");
+  // Drawing / revealing a flower isn't a real decision -- useHumanAutoDraw
+  // dispatches it automatically, so no button is needed for either.
+  if (legal.length === 1 && (legal[0].type === "DRAW" || legal[0].type === "REPLACE_FLOWER")) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/70 p-3 text-center text-sm text-slate-400">
+        Drawing…
+      </div>
+    );
+  }
+
   const discardForSelected = selectedTileId
     ? legal.find((a) => a.type === "DISCARD" && a.tileId === selectedTileId)
     : undefined;
@@ -53,16 +61,6 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
       layout
       className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
     >
-      {drawAction && (
-        <button className={btnPrimary} onClick={() => dispatchAction(drawAction)}>
-          🀫 Draw
-        </button>
-      )}
-      {replaceAction && (
-        <button className={btnPrimary} onClick={() => dispatchAction(replaceAction)}>
-          🌸 Reveal flower &amp; draw
-        </button>
-      )}
       {discardForSelected && (
         <button className={btnPrimary} onClick={() => dispatchAction(discardForSelected)}>
           Discard
@@ -93,12 +91,9 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           Pass
         </button>
       )}
-      {!drawAction &&
-        !replaceAction &&
-        !discardForSelected &&
-        legal.some((a) => a.type === "DISCARD") && (
-          <span className="text-sm text-slate-400">Tap a tile above to discard it</span>
-        )}
+      {!discardForSelected && legal.some((a) => a.type === "DISCARD") && (
+        <span className="text-sm text-slate-400">Tap a tile above to discard it</span>
+      )}
     </motion.div>
   );
 }

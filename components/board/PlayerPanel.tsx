@@ -24,6 +24,30 @@ function Avatar({ seatWind, isHuman }: { seatWind: number; isHuman: boolean }) {
   );
 }
 
+/** A compact "N tiles in hand" indicator for opponents -- showing a full
+ * row of face-down tile backs wastes space that the discard pile (the
+ * thing you actually need to read to count tiles) needs more. */
+function HandCount({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-1.5 text-slate-500">
+      <div className="relative h-6 w-8">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="absolute top-0 h-6 w-4 rounded-[3px] border border-red-950/40"
+            style={{
+              left: i * 5,
+              background: "linear-gradient(155deg, #8a2530 0%, #6d1a24 55%, #591620 100%)",
+              zIndex: i,
+            }}
+          />
+        ))}
+      </div>
+      <span className="text-xs font-semibold">{count} in hand</span>
+    </div>
+  );
+}
+
 function MeldGroup({ meld }: { meld: Meld }) {
   return (
     <motion.div
@@ -46,7 +70,6 @@ interface PlayerPanelProps {
   onSelectTile?: (tileId: string) => void;
   isThinking?: boolean;
   handSize?: TileSize;
-  compact?: boolean;
 }
 
 export function PlayerPanel({
@@ -56,7 +79,6 @@ export function PlayerPanel({
   onSelectTile,
   isThinking,
   handSize = "md",
-  compact,
 }: PlayerPanelProps) {
   const { state } = useGame();
   const player = state.players[seat];
@@ -64,6 +86,12 @@ export function PlayerPanel({
   const isDealer = state.dealerIndex === seat;
   const lastDiscardId =
     state.lastDiscard && state.lastDiscard.seat === seat ? state.lastDiscard.tile.id : null;
+
+  const showDrawnSeparately = isHuman && state.lastDraw?.seat === seat && isActive;
+  const drawnTileId = showDrawnSeparately ? state.lastDraw!.tile.id : null;
+  const handTiles = isHuman
+    ? sortTiles(player.concealedTiles.filter((t) => t.id !== drawnTileId))
+    : [];
 
   return (
     <motion.div
@@ -127,26 +155,33 @@ export function PlayerPanel({
         </div>
       )}
 
-      {!compact && player.discards.length > 0 && (
-        <div className="flex flex-wrap gap-1 rounded-md bg-black/5 p-1.5">
-          <AnimatePresence>
-            {player.discards.map((tile) => (
-              <TileFace
-                key={tile.id}
-                tile={tile}
-                size="sm"
-                layoutId={tile.id}
-                highlight={tile.id === lastDiscardId}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+      {/* Discard pile: always shown in full for every seat -- this is the
+          core tile-counting information mahjong strategy depends on. */}
+      <div className="min-h-[3rem] rounded-md bg-black/5 p-1.5">
+        {player.discards.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            <AnimatePresence>
+              {player.discards.map((tile) => (
+                <TileFace
+                  key={tile.id}
+                  tile={tile}
+                  size="sm"
+                  layoutId={tile.id}
+                  highlight={tile.id === lastDiscardId}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400">No discards yet</span>
+        )}
+      </div>
 
-      <div className="flex flex-wrap gap-1">
-        <AnimatePresence>
-          {isHuman
-            ? sortTiles(player.concealedTiles).map((tile) => (
+      {isHuman ? (
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-wrap gap-1">
+            <AnimatePresence>
+              {handTiles.map((tile) => (
                 <TileFace
                   key={tile.id}
                   tile={tile}
@@ -155,12 +190,37 @@ export function PlayerPanel({
                   selected={tile.id === selectedTileId}
                   onClick={onSelectTile ? () => onSelectTile(tile.id) : undefined}
                 />
-              ))
-            : player.concealedTiles.map((tile) => (
-                <TileFace key={tile.id} faceDown size={compact ? "sm" : handSize} animateIn={false} />
               ))}
-        </AnimatePresence>
-      </div>
+            </AnimatePresence>
+          </div>
+
+          <AnimatePresence>
+            {showDrawnSeparately && (
+              <motion.div
+                key="drawn-slot"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center gap-1 border-l-2 border-dashed border-amber-300 pl-3"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">
+                  Drawn
+                </span>
+                <TileFace
+                  tile={state.lastDraw!.tile}
+                  size={handSize}
+                  layoutId={state.lastDraw!.tile.id}
+                  selected={state.lastDraw!.tile.id === selectedTileId}
+                  onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
+                  highlight
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <HandCount count={player.concealedTiles.length} />
+      )}
     </motion.div>
   );
 }

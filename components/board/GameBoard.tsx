@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
+import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
 import { TileFace } from "@/components/tiles/TileFace";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
@@ -12,6 +13,7 @@ import { PlayerPanel } from "./PlayerPanel";
 
 export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   const thinkingSeat = useBotDriver();
+  useHumanAutoDraw();
   const { state, humanSeat } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
 
@@ -20,19 +22,19 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   const leftSeat = nextSeat(topSeat);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-3 p-3 sm:p-4">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1.4fr_1fr] sm:items-start">
+    <div className="mx-auto flex max-w-6xl flex-col gap-3 p-3 sm:p-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.1fr_0.9fr_1.1fr] sm:items-start">
         <div className="order-3 sm:order-1">
-          <PlayerPanel seat={leftSeat} isHuman={false} isThinking={thinkingSeat === leftSeat} compact />
+          <PlayerPanel seat={leftSeat} isHuman={false} isThinking={thinkingSeat === leftSeat} />
         </div>
 
         <div className="order-1 flex flex-col gap-2 sm:order-2">
-          <PlayerPanel seat={topSeat} isHuman={false} isThinking={thinkingSeat === topSeat} compact />
+          <PlayerPanel seat={topSeat} isHuman={false} isThinking={thinkingSeat === topSeat} />
           <CenterTable />
         </div>
 
         <div className="order-4 sm:order-3">
-          <PlayerPanel seat={rightSeat} isHuman={false} isThinking={thinkingSeat === rightSeat} compact />
+          <PlayerPanel seat={rightSeat} isHuman={false} isThinking={thinkingSeat === rightSeat} />
         </div>
       </div>
 

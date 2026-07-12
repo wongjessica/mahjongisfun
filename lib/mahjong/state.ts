@@ -72,6 +72,11 @@ export interface GameState {
   /** Most recent discard across all seats, purely for UI display (e.g. a
    * center-of-table callout) -- not read by any rules logic. */
   lastDiscard: { tile: Tile; seat: number } | null;
+  /** The tile a seat just drew (from the wall, a replacement, or a kong
+   * replacement) and hasn't yet acted on -- purely for UI display, so the
+   * drawn tile can be shown separately before it settles into the sorted
+   * hand. Cleared whenever that seat's turn resolves without a fresh draw. */
+  lastDraw: { tile: Tile; seat: number } | null;
 }
 
 export function otherSeats(seat: number): number[] {

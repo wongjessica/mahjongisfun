@@ -1,167 +1,55 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Tile } from "@/lib/mahjong/tiles";
 
-// Real mahjong tiles are hand-drawn here (pip grids, kanji, emoji) rather
-// than relying on the Unicode Mahjong Tiles block, whose font coverage is
-// inconsistent across platforms (e.g. White Dragon renders as literally
-// blank on some systems).
-
-const PIP_LAYOUT: Record<number, [number, number][]> = {
-  1: [[1, 1]],
-  2: [
-    [0, 2],
-    [2, 0],
-  ],
-  3: [
-    [0, 2],
-    [1, 1],
-    [2, 0],
-  ],
-  4: [
-    [0, 0],
-    [0, 2],
-    [2, 0],
-    [2, 2],
-  ],
-  5: [
-    [0, 0],
-    [0, 2],
-    [1, 1],
-    [2, 0],
-    [2, 2],
-  ],
-  6: [
-    [0, 0],
-    [0, 2],
-    [1, 0],
-    [1, 2],
-    [2, 0],
-    [2, 2],
-  ],
-  7: [
-    [0, 0],
-    [0, 1],
-    [0, 2],
-    [1, 1],
-    [2, 0],
-    [2, 1],
-    [2, 2],
-  ],
-  8: [
-    [0, 0],
-    [0, 1],
-    [0, 2],
-    [1, 0],
-    [1, 2],
-    [2, 0],
-    [2, 1],
-    [2, 2],
-  ],
-  9: [
-    [0, 0],
-    [0, 1],
-    [0, 2],
-    [1, 0],
-    [1, 1],
-    [1, 2],
-    [2, 0],
-    [2, 1],
-    [2, 2],
-  ],
+// Tile artwork: public domain (CC0) "Hong Kong" set from
+// https://github.com/samoheen/mahjong-tiles, copied into public/tiles/.
+const DRAGON_FILES: Record<number, string> = { 1: "03-red-dragon", 2: "02-green-dragon", 3: "01-white-dragon" };
+const WIND_FILES: Record<number, string> = {
+  1: "04-east-wind",
+  2: "05-south-wind",
+  3: "06-west-wind",
+  4: "07-north-wind",
 };
+const SEASON_FILES: Record<number, string> = { 1: "35-spring", 2: "36-summer", 3: "37-autumn", 4: "38-winter" };
+const FLOWER_FILES: Record<number, string> = { 1: "39-plum", 2: "40-orchid", 3: "41-chrysanthemum", 4: "42-bamboo" };
 
-const DOT_COLORS = ["#dc2626", "#2563eb", "#16a34a", "#dc2626", "#2563eb"];
-const KANJI_NUMERALS = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
-const WIND_KANJI: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "北" };
-const FLOWER_EMOJI: Record<number, string> = { 1: "🌷", 2: "🌸", 3: "🎋", 4: "🌼" };
-const SEASON_EMOJI: Record<number, string> = { 1: "🌱", 2: "☀️", 3: "🍁", 4: "❄️" };
-
-function PipGrid({ rank, shape }: { rank: number; shape: "circle" | "bar" }) {
-  const positions = PIP_LAYOUT[rank] ?? [];
-  return (
-    <div className="grid h-full w-full grid-cols-3 grid-rows-3 gap-[6%] p-[10%]">
-      {Array.from({ length: 9 }, (_, i) => {
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        const pipIndex = positions.findIndex(([r, c]) => r === row && c === col);
-        return (
-          <div key={i} className="flex items-center justify-center">
-            {pipIndex !== -1 &&
-              (shape === "circle" ? (
-                <span
-                  className="block rounded-full"
-                  style={{
-                    width: "85%",
-                    height: "85%",
-                    background: `radial-gradient(circle at 35% 30%, ${DOT_COLORS[pipIndex % DOT_COLORS.length]}dd, ${DOT_COLORS[pipIndex % DOT_COLORS.length]})`,
-                    boxShadow: "inset -1px -1px 2px rgba(0,0,0,0.35), 0 1px 1px rgba(255,255,255,0.5)",
-                  }}
-                />
-              ) : (
-                <span
-                  className="block rounded-[2px] bg-gradient-to-b from-emerald-500 to-emerald-700"
-                  style={{ width: "42%", height: "92%", boxShadow: "inset -1px 0 1px rgba(0,0,0,0.35)" }}
-                />
-              ))}
-          </div>
-        );
-      })}
-    </div>
-  );
+// File numbers below 10 are zero-padded to two digits (e.g. "09-characters-2.svg").
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
 }
 
-function TileContent({ tile }: { tile: Pick<Tile, "suit" | "rank"> }) {
+function tileImageFile(tile: Pick<Tile, "suit" | "rank">): string {
   switch (tile.suit) {
-    case "characters":
-      return (
-        <div className="flex h-full w-full flex-col items-center justify-center leading-[0.95] gap-[0.08em]">
-          <span className="text-[1.15em] font-bold text-slate-900">{KANJI_NUMERALS[tile.rank]}</span>
-          <span className="text-[0.85em] font-bold text-red-600">萬</span>
-        </div>
-      );
-    case "dots":
-      return <PipGrid rank={tile.rank} shape="circle" />;
-    case "bamboo":
-      return tile.rank === 1 ? (
-        <div className="flex h-full w-full items-center justify-center text-[1.6em]">🐦</div>
-      ) : (
-        <PipGrid rank={tile.rank} shape="bar" />
-      );
-    case "winds":
-      return (
-        <span className="text-[1.5em] font-bold text-blue-800" style={{ fontFamily: "serif" }}>
-          {WIND_KANJI[tile.rank]}
-        </span>
-      );
     case "dragons":
-      if (tile.rank === 1) {
-        return (
-          <span className="text-[1.5em] font-bold text-red-600" style={{ fontFamily: "serif" }}>
-            中
-          </span>
-        );
-      }
-      if (tile.rank === 2) {
-        return (
-          <span className="text-[1.5em] font-bold text-emerald-600" style={{ fontFamily: "serif" }}>
-            發
-          </span>
-        );
-      }
-      return <div className="h-[55%] w-[65%] rounded-[3px] border-[3px] border-blue-700" />;
-    case "flowers":
-      return <div className="flex h-full w-full items-center justify-center text-[1.3em]">{FLOWER_EMOJI[tile.rank]}</div>;
+      return DRAGON_FILES[tile.rank];
+    case "winds":
+      return WIND_FILES[tile.rank];
+    case "characters":
+      return `${pad(7 + tile.rank)}-characters-${tile.rank}`;
+    case "dots":
+      return `${pad(16 + tile.rank)}-circles-${tile.rank}`;
+    case "bamboo":
+      return `${pad(25 + tile.rank)}-bamboos-${tile.rank}`;
     case "seasons":
-      return <div className="flex h-full w-full items-center justify-center text-[1.3em]">{SEASON_EMOJI[tile.rank]}</div>;
+      return SEASON_FILES[tile.rank];
+    case "flowers":
+      return FLOWER_FILES[tile.rank];
   }
 }
 
+/** Preloadable path for a tile's face art, for callers that want to warm
+ * the browser cache (e.g. before an animation reveals it). */
+export function tileImageSrc(tile: Pick<Tile, "suit" | "rank">): string {
+  return `/tiles/${tileImageFile(tile)}.svg`;
+}
+
 const SIZE_CONFIG = {
-  sm: { w: 30, h: 42, font: 11 },
-  md: { w: 44, h: 60, font: 15 },
-  lg: { w: 62, h: 84, font: 21 },
+  sm: { w: 30, h: 42 },
+  md: { w: 44, h: 62 },
+  lg: { w: 62, h: 87 },
 };
 
 export type TileSize = keyof typeof SIZE_CONFIG;
@@ -191,7 +79,7 @@ export function TileFace({
   highlight,
   animateIn = true,
 }: TileFaceProps) {
-  const { w, h, font } = SIZE_CONFIG[size];
+  const { w, h } = SIZE_CONFIG[size];
   const isBack = faceDown || !tile;
 
   return (
@@ -207,7 +95,7 @@ export function TileFace({
       whileHover={onClick ? { y: -6 } : undefined}
       whileTap={onClick ? { scale: 0.94 } : undefined}
       transition={{ type: "spring", stiffness: 480, damping: 30 }}
-      style={{ width: w, height: h, fontSize: font }}
+      style={{ width: w, height: h }}
       className={`relative shrink-0 select-none rounded-[6px] border ${
         selected ? "border-blue-500" : isBack ? "border-red-950/50" : "border-black/10"
       } ${onClick ? "cursor-pointer" : "cursor-default"} ${
@@ -228,10 +116,17 @@ export function TileFace({
         </div>
       ) : (
         <div
-          className="flex h-full w-full items-center justify-center rounded-[5px]"
+          className="flex h-full w-full items-center justify-center rounded-[5px] p-[8%]"
           style={{ background: "linear-gradient(160deg, #fffef8 0%, #f2efe2 100%)" }}
         >
-          <TileContent tile={tile} />
+          <Image
+            src={tileImageSrc(tile)}
+            alt=""
+            width={300}
+            height={420}
+            draggable={false}
+            className="h-full w-full object-contain"
+          />
         </div>
       )}
     </motion.button>

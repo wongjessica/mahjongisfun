@@ -32,6 +32,7 @@ function makeTestState(overrides: Partial<GameState> = {}): GameState {
     winners: null,
     isDraw: false,
     lastDiscard: null,
+    lastDraw: null,
     ...overrides,
   };
 }

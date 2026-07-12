@@ -101,6 +101,7 @@ export function createInitialState(config: InitialStateConfig): GameState {
     winners: null,
     isDraw: false,
     lastDiscard: null,
+    lastDraw: null,
   };
 }
 
@@ -160,6 +161,7 @@ function resolveDrawnTileForSeat(
   return {
     ...next,
     lastDrawWasReplacement: opts.isReplacement,
+    lastDraw: { tile, seat },
     turn: { phase: "awaiting-discard", activeSeat: seat },
   };
 }
@@ -242,7 +244,7 @@ function handleDiscard(state: GameState, tileId: string): GameState {
     concealedTiles: player.concealedTiles.filter((t) => t.id !== tileId),
     discards: [...player.discards, tile],
   });
-  next = { ...next, lastDrawWasReplacement: false, lastDiscard: { tile, seat } };
+  next = { ...next, lastDrawWasReplacement: false, lastDiscard: { tile, seat }, lastDraw: null };
 
   const eligibleSeats = otherSeats(seat).filter((s) => hasAnyCallOption(next, s, tile, seat));
   if (eligibleSeats.length === 0) {
@@ -375,7 +377,12 @@ function applyChi(
   next = updatePlayer(next, discardingSeat, {
     discards: discarder.discards.filter((t) => t.id !== discard.id),
   });
-  return { ...next, pendingCallWindow: null, turn: { phase: "awaiting-discard", activeSeat: seat } };
+  return {
+    ...next,
+    pendingCallWindow: null,
+    lastDraw: null,
+    turn: { phase: "awaiting-discard", activeSeat: seat },
+  };
 }
 
 function applyPon(state: GameState, seat: number, discardingSeat: number, discard: Tile): GameState {
@@ -400,7 +407,12 @@ function applyPon(state: GameState, seat: number, discardingSeat: number, discar
   next = updatePlayer(next, discardingSeat, {
     discards: discarder.discards.filter((t) => t.id !== discard.id),
   });
-  return { ...next, pendingCallWindow: null, turn: { phase: "awaiting-discard", activeSeat: seat } };
+  return {
+    ...next,
+    pendingCallWindow: null,
+    lastDraw: null,
+    turn: { phase: "awaiting-discard", activeSeat: seat },
+  };
 }
 
 function applyKongExposed(
