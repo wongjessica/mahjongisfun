@@ -43,7 +43,8 @@ function tileImageFile(tile: Pick<Tile, "suit" | "rank">): string {
 /** Preloadable path for a tile's face art, for callers that want to warm
  * the browser cache (e.g. before an animation reveals it). */
 export function tileImageSrc(tile: Pick<Tile, "suit" | "rank">): string {
-  return `/tiles/${tileImageFile(tile)}.svg`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  return `${basePath}/tiles/${tileImageFile(tile)}.svg`;
 }
 
 const WIND_LABELS: Record<number, string> = {
