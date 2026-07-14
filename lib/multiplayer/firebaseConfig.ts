@@ -26,4 +26,14 @@ import type { FirebaseOptions } from "firebase/app";
  * The Firebase web config is safe to commit: it's a public identifier, not
  * a secret; access control lives in the database rules.
  */
-export const FIREBASE_CONFIG: FirebaseOptions | null = null;
+export const FIREBASE_CONFIG: FirebaseOptions | null = {
+  apiKey: "AIzaSyB3_vp0cTY2T3L4w021ePOrlIGwAfclx7U",
+  authDomain: "mahjongisfun-10815.firebaseapp.com",
+  // Not in the console's copy-paste snippet, but required for Realtime
+  // Database -- this is the database's actual address (us-central1).
+  databaseURL: "https://mahjongisfun-10815-default-rtdb.firebaseio.com",
+  projectId: "mahjongisfun-10815",
+  storageBucket: "mahjongisfun-10815.firebasestorage.app",
+  messagingSenderId: "217586797009",
+  appId: "1:217586797009:web:6e3dbc4cec038a881cb8f0",
+};
