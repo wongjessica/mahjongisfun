@@ -9,6 +9,8 @@ interface LabeledTileProps {
   animateIn?: boolean;
   onClick?: () => void;
   selected?: boolean;
+  speed?: "fast" | "slow";
+  enterDelay?: number;
 }
 
 /** A TileFace plus an always-visible plain-English caption underneath, e.g.

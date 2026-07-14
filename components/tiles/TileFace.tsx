@@ -79,13 +79,21 @@ export function tileLabel(tile: Pick<Tile, "suit" | "rank">): string {
   }
 }
 
-const SIZE_CONFIG = {
-  sm: { w: 30, h: 42 },
-  md: { w: 44, h: 62 },
-  lg: { w: 62, h: 87 },
+// Fixed 5:7 aspect ratio at every breakpoint. md/lg shrink on narrow phone
+// viewports and grow back to their original desktop size at the sm: (640px)
+// breakpoint, so a full hand of 14 tiles never forces horizontal scrolling.
+const SIZE_CLASSES = {
+  sm: "w-[30px] h-[42px]",
+  md: "w-9 h-[50px] sm:w-11 sm:h-[62px]",
+  lg: "w-11 h-[62px] sm:w-[62px] sm:h-[87px]",
 };
 
-export type TileSize = keyof typeof SIZE_CONFIG;
+export type TileSize = keyof typeof SIZE_CLASSES;
+
+const SPEED_SPRING = {
+  fast: { type: "spring" as const, stiffness: 700, damping: 42 },
+  slow: { type: "spring" as const, stiffness: 480, damping: 30 },
+};
 
 interface TileFaceProps {
   tile?: Tile;
@@ -100,6 +108,13 @@ interface TileFaceProps {
   /** Adds a soft amber glow, used to call out the just-discarded tile. */
   highlight?: boolean;
   animateIn?: boolean;
+  /** Fast: snappier, near-instant. Slow: gentler, more "immersive" spring.
+   * Defaults to "slow" so callers outside a game (e.g. the setup screen's
+   * decorative tiles) keep the original cinematic feel. */
+  speed?: "fast" | "slow";
+  /** Seconds to delay the entrance animation (not layout repositioning) --
+   * used to stagger the initial deal one tile at a time in slow mode. */
+  enterDelay?: number;
 }
 
 export function TileFace({
@@ -111,9 +126,11 @@ export function TileFace({
   layoutId,
   highlight,
   animateIn = true,
+  speed = "slow",
+  enterDelay = 0,
 }: TileFaceProps) {
-  const { w, h } = SIZE_CONFIG[size];
   const isBack = faceDown || !tile;
+  const spring = SPEED_SPRING[speed];
 
   // Only a genuinely clickable tile should be a <button> -- a decorative
   // tile (e.g. composited into the ActionBar's discard preview button) must
@@ -130,9 +147,17 @@ export function TileFace({
     exit: { opacity: 0, scale: 0.55, y: 12 },
     whileHover: onClick ? { y: -6 } : undefined,
     whileTap: onClick ? { scale: 0.94 } : undefined,
-    transition: { type: "spring" as const, stiffness: 480, damping: 30 },
-    style: { width: w, height: h },
-    className: `relative shrink-0 select-none rounded-[6px] border ${
+    // Delay only the entrance (opacity/y/scale), never layout repositioning
+    // -- a delayed FLIP would make repositioning feel laggy in slow mode.
+    transition: enterDelay
+      ? {
+          opacity: { ...spring, delay: enterDelay },
+          y: { ...spring, delay: enterDelay },
+          scale: { ...spring, delay: enterDelay },
+          layout: spring,
+        }
+      : spring,
+    className: `relative shrink-0 select-none rounded-[6px] border ${SIZE_CLASSES[size]} ${
       selected ? "border-blue-500" : isBack ? "border-red-950/50" : "border-black/10"
     } ${onClick ? "cursor-pointer" : "cursor-default"} ${
       selected ? "shadow-[0_8px_16px_rgba(37,99,235,0.35)]" : "shadow-[0_2px_3px_rgba(0,0,0,0.2)]"

@@ -5,7 +5,7 @@ import { toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 import { useGame } from "./GameContext";
 
-const AUTO_DRAW_DELAY_MS = 200;
+const AUTO_DRAW_DELAY_MS = { fast: 60, slow: 200 } as const;
 
 /** Drawing (and revealing/replacing a flower) isn't a real decision in
  * mahjong -- you always do it on your turn, there's no choice involved.
@@ -13,7 +13,7 @@ const AUTO_DRAW_DELAY_MS = 200;
  * non-choice. DISCARD, DECLARE_WIN, and CALL_* stay manual: those are the
  * actual decisions. */
 export function useHumanAutoDraw() {
-  const { state, dispatch, humanSeat } = useGame();
+  const { state, dispatch, humanSeat, speed } = useGame();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -25,10 +25,10 @@ export function useHumanAutoDraw() {
     const action = legal[0];
     timeoutRef.current = setTimeout(() => {
       dispatch(toGameAction(action, humanSeat));
-    }, AUTO_DRAW_DELAY_MS);
+    }, AUTO_DRAW_DELAY_MS[speed]);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [state, dispatch, humanSeat]);
+  }, [state, dispatch, humanSeat, speed]);
 }

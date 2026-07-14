@@ -284,6 +284,7 @@ function handleSelfDrawWin(state: GameState, seat: number): GameState {
     wonTile,
     fromSeat: null,
     breakdown: score.breakdown,
+    revealedHand: { concealedTiles: player.concealedTiles, melds: player.melds },
   };
 
   let next = state;
@@ -475,6 +476,7 @@ function applyDiscardWins(
       wonTile: discard,
       fromSeat: discardingSeat,
       breakdown: score.breakdown,
+      revealedHand: { concealedTiles: concealed, melds: player.melds },
     });
     next = updatePlayer(next, seat, { score: next.players[seat].score + score.fan });
     next = updatePlayer(next, discardingSeat, {

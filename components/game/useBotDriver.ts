@@ -7,7 +7,7 @@ import { getLegalActions } from "@/lib/mahjong/reducer";
 import { GameState } from "@/lib/mahjong/state";
 import { useGame } from "./GameContext";
 
-const BOT_DELAY_MS = 550;
+const BOT_DELAY_MS = { fast: 120, slow: 550 } as const;
 
 /** The bot seat (if any) that currently has an action pending -- the same
  * seat useBotDriver is about to act for. Exposed so the UI can show a
@@ -29,7 +29,7 @@ export function getPendingBotSeat(state: GameState, humanSeat: number): number |
  *
  * Returns the seat currently "thinking" (or null) for a UI indicator. */
 export function useBotDriver(): number | null {
-  const { state, dispatch, humanSeat } = useGame();
+  const { state, dispatch, humanSeat, speed } = useGame();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSeat = getPendingBotSeat(state, humanSeat);
 
@@ -40,13 +40,13 @@ export function useBotDriver(): number | null {
     timeoutRef.current = setTimeout(() => {
       const chosen = intermediateStrategy.chooseAction(state, pendingSeat, legal);
       dispatch(toGameAction(chosen, pendingSeat));
-    }, BOT_DELAY_MS);
+    }, BOT_DELAY_MS[speed]);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, dispatch, pendingSeat]);
+  }, [state, dispatch, pendingSeat, speed]);
 
   return pendingSeat;
 }

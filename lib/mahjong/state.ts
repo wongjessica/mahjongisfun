@@ -53,6 +53,12 @@ export interface WinResult {
   wonTile: Tile;
   fromSeat: number | null;
   breakdown: { label: string; fan: number }[];
+  /** Snapshot of the winning hand at the moment of winning (concealed tiles
+   * include the winning tile itself, for both self-draw and discard-win),
+   * so the UI can reveal the full hand for verification -- a live player's
+   * concealedTiles/melds keep changing shape across the game, so this can't
+   * be derived after the fact from GameState alone. */
+  revealedHand: { concealedTiles: Tile[]; melds: Meld[] };
 }
 
 export interface GameState {

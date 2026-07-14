@@ -1,22 +1,30 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
-import { LabeledTile } from "@/components/tiles/LabeledTile";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
 import { DiscardBoard } from "./DiscardBoard";
 import { PlayerPanel } from "./PlayerPanel";
+import { WinnerHand } from "./WinnerBanner";
 
 export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   const thinkingSeat = useBotDriver();
   useHumanAutoDraw();
   const { state, humanSeat } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+
+  // Auto-select the tile you just drew -- discarding it (the common case)
+  // is then a single tap, instead of having to select it first.
+  useEffect(() => {
+    if (state.lastDraw && state.lastDraw.seat === humanSeat) {
+      setSelectedTileId(state.lastDraw.tile.id);
+    }
+  }, [state.lastDraw, humanSeat]);
 
   const rightSeat = nextSeat(humanSeat);
   const topSeat = nextSeat(rightSeat);
@@ -55,9 +63,8 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
             ) : (
               <div className="flex flex-col items-center gap-3">
                 {state.winners?.map((winner) => (
-                  <div key={winner.seat} className="flex items-center gap-3">
-                    <LabeledTile tile={winner.wonTile} size="md" animateIn={false} />
-                    <div className="text-left">
+                  <div key={winner.seat} className="flex flex-col items-center gap-2">
+                    <div>
                       <p className="font-bold text-amber-900">
                         {winner.seat === humanSeat ? "You" : "Bot"} won with {winner.fan} fan
                         {winner.selfDraw ? " (self-draw)" : ""}
@@ -66,6 +73,7 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
                         {winner.breakdown.map((b) => `${b.label} (${b.fan})`).join(" · ")}
                       </p>
                     </div>
+                    <WinnerHand winner={winner} />
                   </div>
                 ))}
               </div>

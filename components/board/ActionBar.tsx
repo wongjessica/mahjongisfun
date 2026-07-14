@@ -120,17 +120,33 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           Kong
         </motion.button>
       ))}
-      {chiActions.map((action, i) => (
-        <motion.button
-          key={i}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.95 }}
-          className={btnSecondary}
-          onClick={() => dispatchAction(action)}
-        >
-          Chi
-        </motion.button>
-      ))}
+      {chiActions.map((action) => {
+        const t1 = player.concealedTiles.find((t) => t.id === action.tileIds[0]);
+        const t2 = player.concealedTiles.find((t) => t.id === action.tileIds[1]);
+        if (!t1 || !t2) return null;
+        return (
+          <motion.button
+            key={action.tileIds.join("-")}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => dispatchAction(action)}
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 py-1.5 pl-2 pr-3 text-white shadow-sm shadow-amber-900/20 transition-all hover:from-amber-400 hover:to-amber-600"
+          >
+            <div className="flex -space-x-2">
+              <TileFace tile={t1} size="sm" animateIn={false} />
+              <TileFace tile={t2} size="sm" animateIn={false} />
+            </div>
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-100">
+                Chi with
+              </span>
+              <span className="text-xs font-bold">
+                {tileLabel(t1)} + {tileLabel(t2)}
+              </span>
+            </span>
+          </motion.button>
+        );
+      })}
       {passAction && (
         <motion.button
           whileHover={{ scale: 1.03 }}

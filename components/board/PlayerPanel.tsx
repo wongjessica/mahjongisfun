@@ -1,10 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { GameSpeed } from "@/components/setup/SetupForm";
 import { TileFace, TileSize, tileLabel } from "@/components/tiles/TileFace";
 import { Meld } from "@/lib/mahjong/melds";
 import { sortTiles } from "@/lib/mahjong/tiles";
+
+const DEAL_STAGGER_SECONDS = 0.045;
 
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_AVATAR: Record<number, string> = {
@@ -48,7 +52,7 @@ function HandCount({ count }: { count: number }) {
   );
 }
 
-function MeldGroup({ meld }: { meld: Meld }) {
+function MeldGroup({ meld, speed }: { meld: Meld; speed: GameSpeed }) {
   return (
     <motion.div
       layout
@@ -57,7 +61,7 @@ function MeldGroup({ meld }: { meld: Meld }) {
       className="flex gap-0.5 rounded-md bg-black/5 p-1"
     >
       {meld.tiles.map((tile) => (
-        <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} />
+        <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} speed={speed} />
       ))}
     </motion.div>
   );
@@ -80,7 +84,7 @@ export function PlayerPanel({
   isThinking,
   handSize = "md",
 }: PlayerPanelProps) {
-  const { state } = useGame();
+  const { state, speed } = useGame();
   const player = state.players[seat];
   const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
   const isDealer = state.dealerIndex === seat;
@@ -90,6 +94,15 @@ export function PlayerPanel({
   const handTiles = isHuman
     ? sortTiles(player.concealedTiles.filter((t) => t.id !== drawnTileId))
     : [];
+
+  // Only the very first render (the initial deal) should stagger tiles in
+  // one at a time -- a later single-tile draw shouldn't get an artificial
+  // delay, since there's nothing to stagger against.
+  const isInitialDealRef = useRef(true);
+  useEffect(() => {
+    isInitialDealRef.current = false;
+  }, []);
+  const dealStagger = isInitialDealRef.current && speed === "slow";
 
   return (
     <motion.div
@@ -142,12 +155,12 @@ export function PlayerPanel({
         <div className="flex flex-wrap gap-1">
           <AnimatePresence>
             {player.flowers.map((tile) => (
-              <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} />
+              <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} speed={speed} />
             ))}
           </AnimatePresence>
           <AnimatePresence>
             {player.melds.map((meld, i) => (
-              <MeldGroup key={`${meld.type}-${i}-${meld.tiles[0]?.id}`} meld={meld} />
+              <MeldGroup key={`${meld.type}-${i}-${meld.tiles[0]?.id}`} meld={meld} speed={speed} />
             ))}
           </AnimatePresence>
         </div>
@@ -157,7 +170,7 @@ export function PlayerPanel({
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-wrap gap-1">
             <AnimatePresence>
-              {handTiles.map((tile) => (
+              {handTiles.map((tile, i) => (
                 <TileFace
                   key={tile.id}
                   tile={tile}
@@ -165,6 +178,8 @@ export function PlayerPanel({
                   layoutId={tile.id}
                   selected={tile.id === selectedTileId}
                   onClick={onSelectTile ? () => onSelectTile(tile.id) : undefined}
+                  speed={speed}
+                  enterDelay={dealStagger ? i * DEAL_STAGGER_SECONDS : 0}
                 />
               ))}
             </AnimatePresence>
@@ -189,6 +204,7 @@ export function PlayerPanel({
                   selected={state.lastDraw!.tile.id === selectedTileId}
                   onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
                   highlight
+                  speed={speed}
                 />
                 <span className="text-[9px] font-medium text-amber-700">
                   {tileLabel(state.lastDraw!.tile)}
