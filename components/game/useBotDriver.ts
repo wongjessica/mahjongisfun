@@ -27,11 +27,14 @@ export function getPendingBotSeat(state: GameState, humanSeat: number): number |
  * out-of-order responses, so this timing never affects correctness -- it
  * only exists so bot moves don't feel instantaneous.
  *
- * Returns the seat currently "thinking" (or null) for a UI indicator. */
-export function useBotDriver(): number | null {
+ * Returns the seat currently "thinking" (or null) for a UI indicator.
+ * Pass `paused` while a non-interactive intro (e.g. the dice-roll reveal)
+ * is covering the board, so bots don't play out several turns invisibly
+ * behind it. */
+export function useBotDriver(paused = false): number | null {
   const { state, dispatch, humanSeat, speed } = useGame();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingSeat = getPendingBotSeat(state, humanSeat);
+  const pendingSeat = paused ? null : getPendingBotSeat(state, humanSeat);
 
   useEffect(() => {
     if (pendingSeat === null) return undefined;

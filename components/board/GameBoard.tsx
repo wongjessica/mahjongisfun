@@ -10,6 +10,7 @@ import { getLegalActions } from "@/lib/mahjong/reducer";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
+import { DiceRoll } from "./DiceRoll";
 import { DiscardBoard } from "./DiscardBoard";
 import { PlayerPanel } from "./PlayerPanel";
 import { WinnerHand } from "./WinnerBanner";
@@ -24,8 +25,12 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
-  const thinkingSeat = useBotDriver();
-  useHumanAutoDraw();
+  // Every fresh mount (a new match or a rotated-dealer "Next Round") starts
+  // with its own dice roll, which pauses bot/auto-draw underneath it so
+  // nothing plays out invisibly behind the animation.
+  const [rollingDice, setRollingDice] = useState(true);
+  const thinkingSeat = useBotDriver(rollingDice);
+  useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat, botNames } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
 
@@ -54,6 +59,7 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
   };
 
   const winnerName = (seat: number) => (seat === humanSeat ? "You" : botNames[seat]);
+  const staysVerb = (seat: number) => (seat === humanSeat ? "stay" : "stays");
 
   // Dealer repeats if they won (or the round drew); otherwise dealership
   // passes to the next seat in turn order.
@@ -126,7 +132,7 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
             )}
             <p className="mt-3 text-xs text-amber-700">
               {dealerRepeats
-                ? `${winnerName(state.dealerIndex)} stays dealer next round.`
+                ? `${winnerName(state.dealerIndex)} ${staysVerb(state.dealerIndex)} dealer next round.`
                 : `Dealership passes to ${winnerName(nextSeat(state.dealerIndex))}.`}
             </p>
             <div className="mt-3 flex items-center justify-center gap-3">
@@ -157,6 +163,10 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
       />
 
       <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
+
+      <AnimatePresence>
+        {rollingDice && <DiceRoll onDone={() => setRollingDice(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

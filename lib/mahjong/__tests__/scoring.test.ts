@@ -18,7 +18,6 @@ import { Tile } from "../tiles";
 
 function baseContext(overrides: Partial<ScoringContext> = {}): ScoringContext {
   return {
-    isDealer: false,
     selfDraw: false,
     isReplacementWin: false,
     isRobbingKong: false,
@@ -90,49 +89,47 @@ describe("scoring", () => {
     );
   });
 
-  it("composes dealer and self-draw bonuses across all four combinations", () => {
+  it("adds a self-draw bonus fan on top of the base hand pattern", () => {
     const decompositions = decomposeHand(twoFanHand(), []);
-    const combos: [boolean, boolean][] = [
-      [false, false],
-      [false, true],
-      [true, false],
-      [true, true],
-    ];
-    const fans = combos.map(
-      ([isDealer, selfDraw]) => bestScore(decompositions, baseContext({ isDealer, selfDraw }))!.fan
+    const fans = [false, true].map(
+      (selfDraw) => bestScore(decompositions, baseContext({ selfDraw }))!.fan
     );
-    // baseline Concealed Hand (1) + Self-Draw (1) and/or Dealer (1)
-    expect(fans).toEqual([1, 2, 2, 3]);
+    // baseline Concealed Hand (1), +1 more when self-draw
+    expect(fans).toEqual([1, 2]);
   });
 
-  it("scales flower bonus fan by count and seat match, up to the flower cap", () => {
+  it("only counts a flower/season that matches the holder's own seat, up to the cap", () => {
     const decompositions = decomposeHand(twoFanHand(), []);
-    const flowers: Tile[] = [
+    const matching: Tile[] = [
       { id: "f1", suit: "flowers", rank: 1 },
-      { id: "f2", suit: "flowers", rank: 2 },
+      { id: "f2", suit: "seasons", rank: 1 },
     ];
-    const result = bestScore(
-      decompositions,
-      baseContext({ seatWind: 1, flowers })
-    )!;
-    // Raw flower fan would be 2 flowers * 1 + 1 seat-matching flower * 1 = 3,
-    // but flowers are capped at ruleset.flowerFanCap (2). Concealed Hand (1) + 2 = 3.
-    expect(result.fan).toBe(1 + 2);
+    const offSeat: Tile[] = [{ id: "f3", suit: "flowers", rank: 2 }];
+
+    // Two seat-matching bonus tiles (own flower + own season): capped at 2.
+    const matchingResult = bestScore(decompositions, baseContext({ seatWind: 1, flowers: matching }))!;
+    expect(matchingResult.breakdown.map((b) => b.label)).toContain("Flowers");
+    expect(matchingResult.fan).toBe(1 + 2); // Concealed Hand (1) + Flowers (2, capped)
+
+    // An off-seat flower/season is worth nothing at all.
+    const offSeatResult = bestScore(decompositions, baseContext({ seatWind: 1, flowers: offSeat }))!;
+    expect(offSeatResult.breakdown.map((b) => b.label)).not.toContain("Flowers");
+    expect(offSeatResult.fan).toBe(1); // Concealed Hand only
   });
 
   it("never lets flowers alone satisfy the fan minimum", () => {
     // A hand worth nothing but the automatic Concealed Hand bonus (1 fan),
-    // plus enough flowers that their fan would reach the 3-fan minimum if
-    // flowers counted toward it -- they must not.
+    // plus two seat-matching bonus tiles (own flower + own season) that
+    // would reach the 3-fan minimum if flowers counted toward it -- they
+    // must not.
     const decompositions = decomposeHand(twoFanHand(), []);
     const flowers: Tile[] = [
       { id: "f1", suit: "flowers", rank: 1 },
-      { id: "f2", suit: "flowers", rank: 2 },
-      { id: "f3", suit: "flowers", rank: 3 },
+      { id: "f2", suit: "seasons", rank: 1 },
     ];
     const ctx = baseContext({ seatWind: 1, flowers, ruleset: createRuleset(3) });
     const score = bestScore(decompositions, ctx)!;
-    // Total fan (capped) easily clears 3 (1 concealed + 2 capped flowers = 3)...
+    // Total fan (capped) clears 3 (1 concealed + 2 capped flowers = 3)...
     expect(score.fan).toBeGreaterThanOrEqual(3);
     // ...but qualifying (non-flower) fan is only 1, so the win must be illegal.
     expect(score.qualifyingFan).toBe(1);

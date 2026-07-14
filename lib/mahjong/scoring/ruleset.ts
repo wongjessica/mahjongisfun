@@ -3,9 +3,8 @@ export interface Ruleset {
   fanMinimum: 0 | 3;
   /** Fan total is capped at this value (standard "limit hand"). */
   limitFan: number;
-  /** Fan awarded per flower/season tile held. */
-  flowerFanEach: number;
-  /** Extra fan awarded per flower/season tile that matches the holder's own seat. */
+  /** Fan awarded per flower/season tile that matches the holder's own seat
+   * (rank === seatWind) -- an off-seat flower is worth nothing. */
   seatMatchFlowerFanEach: number;
   /** Flowers are luck, not hand pattern: their total fan contribution is
    * capped, and (separately, enforced in calculate.ts) never counts toward
@@ -16,7 +15,6 @@ export interface Ruleset {
 export const DEFAULT_RULESET: Ruleset = {
   fanMinimum: 3,
   limitFan: 13,
-  flowerFanEach: 1,
   seatMatchFlowerFanEach: 1,
   flowerFanCap: 2,
 };

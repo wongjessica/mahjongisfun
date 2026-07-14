@@ -5,7 +5,6 @@ import { Wind } from "../state";
 import { Ruleset } from "./ruleset";
 
 export interface ScoringContext {
-  isDealer: boolean;
   selfDraw: boolean;
   isReplacementWin: boolean;
   isRobbingKong: boolean;
@@ -119,9 +118,6 @@ const seatRoundWindPattern: FanPattern = (sets, _decomposition, ctx) => {
 const selfDrawPattern: FanPattern = (_sets, _decomposition, ctx) =>
   ctx.selfDraw ? { label: "Self-Draw", fan: 1 } : null;
 
-const dealerPattern: FanPattern = (_sets, _decomposition, ctx) =>
-  ctx.isDealer ? { label: "Dealer", fan: 1 } : null;
-
 // Seven pairs / thirteen orphans already bake concealment into their fixed
 // value, so this only applies to the standard shape to avoid double-counting.
 const concealedHandPattern: FanPattern = (_sets, decomposition) => {
@@ -134,13 +130,14 @@ const concealedHandPattern: FanPattern = (_sets, decomposition) => {
 // Flowers are pure luck (dealt/drawn, no skill or hand-shape involved), so
 // they're kept out of FAN_PATTERNS entirely and applied separately in
 // calculate.ts: capped, and excluded from the fan-minimum qualifying check
-// (a hand can never win on flowers alone).
+// (a hand can never win on flowers alone). Only your OWN seat's flower/
+// season (rank === seatWind) counts -- an off-seat flower is worth nothing,
+// so at most 2 fan is achievable (your own flower tile + your own season
+// tile), which is what the cap reflects.
 export const flowerBonusPattern: FanPattern = (_sets, _decomposition, ctx) => {
-  if (ctx.flowers.length === 0) return null;
   const matching = ctx.flowers.filter((f) => f.rank === ctx.seatWind).length;
-  const rawFan =
-    ctx.flowers.length * ctx.ruleset.flowerFanEach + matching * ctx.ruleset.seatMatchFlowerFanEach;
-  const fan = Math.min(rawFan, ctx.ruleset.flowerFanCap);
+  if (matching === 0) return null;
+  const fan = Math.min(matching * ctx.ruleset.seatMatchFlowerFanEach, ctx.ruleset.flowerFanCap);
   return fan > 0 ? { label: "Flowers", fan } : null;
 };
 
@@ -161,7 +158,6 @@ export const FAN_PATTERNS: FanPattern[] = [
   fourWindsPattern,
   seatRoundWindPattern,
   selfDrawPattern,
-  dealerPattern,
   concealedHandPattern,
   robbingKongPattern,
   replacementWinPattern,

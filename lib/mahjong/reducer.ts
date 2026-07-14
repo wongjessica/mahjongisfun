@@ -121,7 +121,6 @@ function buildScoringContext(
 ): ScoringContext {
   const player = state.players[seat];
   return {
-    isDealer: seat === state.dealerIndex,
     selfDraw: opts.selfDraw,
     isReplacementWin: opts.isReplacementWin,
     isRobbingKong: opts.isRobbingKong,
