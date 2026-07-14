@@ -12,7 +12,7 @@ export function CenterTable() {
   const { lastDiscard } = state;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-5 shadow-inner">
+    <div className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-3 shadow-inner">
       <div className="flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-950/30 px-3 py-1">
         <span className="text-lg font-bold leading-none text-amber-300">{WIND_GLYPH[state.roundWind]}</span>
         <span className="text-xs font-bold uppercase tracking-wide text-amber-200">
@@ -31,7 +31,7 @@ export function CenterTable() {
         </div>
       </div>
 
-      <div className="flex h-24 items-center justify-center">
+      <div className="flex h-20 items-center justify-center">
         <AnimatePresence mode="wait">
           {lastDiscard ? (
             <motion.div
@@ -40,7 +40,7 @@ export function CenterTable() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.7 }}
               transition={{ type: "spring", stiffness: 400, damping: 26 }}
-              className="flex flex-col items-center gap-1.5"
+              className="flex flex-col items-center gap-1"
             >
               <span className="text-[11px] font-medium text-emerald-100/90">
                 {anonymousDiscards
@@ -50,7 +50,7 @@ export function CenterTable() {
                     : botNames[lastDiscard.seat]}{" "}
                 discarded
               </span>
-              <TileFace tile={lastDiscard.tile} size="lg" animateIn={false} />
+              <TileFace tile={lastDiscard.tile} size="sm" animateIn={false} />
               <span className="text-[11px] font-semibold text-amber-300">
                 {tileLabel(lastDiscard.tile)}
               </span>

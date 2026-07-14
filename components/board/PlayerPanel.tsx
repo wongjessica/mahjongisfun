@@ -130,7 +130,7 @@ export function PlayerPanel({
   return (
     <motion.div
       layout
-      className={`flex flex-col gap-1.5 rounded-xl border p-2.5 backdrop-blur-sm transition-colors ${
+      className={`flex flex-col gap-1 rounded-xl border p-2 backdrop-blur-sm transition-colors ${
         isActive
           ? "border-amber-400 bg-white/90 shadow-[0_0_0_3px_rgba(251,191,36,0.35)]"
           : "border-white/10 bg-white/80"

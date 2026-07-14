@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
-import { LabeledTile } from "@/components/tiles/LabeledTile";
+import { TileFace } from "@/components/tiles/TileFace";
 import { Tile } from "@/lib/mahjong/tiles";
 import { nextSeat } from "@/lib/mahjong/state";
 
@@ -38,12 +38,12 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
         </span>
       </div>
       <div
-        className={`flex min-h-[3.5rem] flex-wrap items-start gap-1.5 border-l border-slate-200 py-1.5 pl-2.5 ${rowBorder}`}
+        className={`flex min-h-[2.75rem] flex-wrap items-center gap-1 border-l border-slate-200 py-1 pl-2.5 ${rowBorder}`}
       >
         {player.discards.length > 0 ? (
           <AnimatePresence>
             {player.discards.map((tile) => (
-              <LabeledTile
+              <TileFace
                 key={tile.id}
                 tile={tile}
                 size="sm"
@@ -54,7 +54,7 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
             ))}
           </AnimatePresence>
         ) : (
-          <span className="pt-2 text-xs text-slate-300">—</span>
+          <span className="text-xs text-slate-300">—</span>
         )}
       </div>
     </>
@@ -68,7 +68,7 @@ function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId:
   const scattered = [...tiles].sort((a, b) => hashUnit(a.id, 1) - hashUnit(b.id, 1));
 
   return (
-    <div className="flex min-h-[8rem] flex-wrap content-start items-start gap-x-1 gap-y-3 rounded-lg bg-gradient-to-br from-emerald-800 to-emerald-900 p-3">
+    <div className="flex min-h-[5rem] flex-wrap content-start items-start gap-x-1.5 gap-y-2 rounded-lg bg-gradient-to-br from-emerald-800 to-emerald-900 p-3">
       {scattered.length === 0 ? (
         <span className="text-xs text-emerald-200/60">No discards yet</span>
       ) : (
@@ -80,7 +80,7 @@ function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId:
                 transform: `rotate(${(hashUnit(tile.id, 2) - 0.5) * 26}deg) translateY(${(hashUnit(tile.id, 3) - 0.5) * 14}px)`,
               }}
             >
-              <LabeledTile
+              <TileFace
                 tile={tile}
                 size="sm"
                 layoutId={tile.id}
@@ -111,21 +111,26 @@ export function DiscardBoard() {
   return (
     <motion.div
       layout
-      className="rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
+      className="flex flex-col rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm sm:h-full"
     >
-      <h2 className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+      <h2 className="mb-1.5 shrink-0 text-[11px] font-bold uppercase tracking-wide text-slate-400">
         Discards {anonymousDiscards && <span className="normal-case text-slate-300">(anonymous)</span>}
       </h2>
-      {anonymousDiscards ? (
-        <AnonymousPool tiles={allDiscards} lastDiscardId={lastDiscardId} />
-      ) : (
-        <div className="grid grid-cols-[4.5rem_1fr]">
-          <SeatRow seat={humanSeat} isHuman isFirst />
-          <SeatRow seat={rightSeat} isHuman={false} isFirst={false} />
-          <SeatRow seat={topSeat} isHuman={false} isFirst={false} />
-          <SeatRow seat={leftSeat} isHuman={false} isFirst={false} />
-        </div>
-      )}
+      {/* On desktop this scrolls internally within whatever height the page
+          layout allocates, so a long discard pile never pushes the human's
+          hand/action bar (or the opponents above) out of the viewport. */}
+      <div className="min-h-0 sm:flex-1 sm:overflow-y-auto">
+        {anonymousDiscards ? (
+          <AnonymousPool tiles={allDiscards} lastDiscardId={lastDiscardId} />
+        ) : (
+          <div className="grid grid-cols-[4.5rem_1fr]">
+            <SeatRow seat={humanSeat} isHuman isFirst />
+            <SeatRow seat={rightSeat} isHuman={false} isFirst={false} />
+            <SeatRow seat={topSeat} isHuman={false} isFirst={false} />
+            <SeatRow seat={leftSeat} isHuman={false} isFirst={false} />
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

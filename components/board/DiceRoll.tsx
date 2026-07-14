@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 
@@ -47,10 +47,18 @@ export function DiceRoll({ onDone }: { onDone: () => void }) {
   const rollingMs = speed === "fast" ? 450 : 1100;
   const holdMs = speed === "fast" ? 250 : 700;
   const [finalValues] = useState(() => [randomFaceIndex(), randomFaceIndex(), randomFaceIndex()]);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
-    const timeout = setTimeout(onDone, rollingMs + holdMs);
-    return () => clearTimeout(timeout);
+    // The total must only appear once every die has actually stopped
+    // spinning -- showing it earlier gives away the result before the
+    // "roll" visually finishes, which doesn't read as a real dice roll.
+    const settleTimeout = setTimeout(() => setSettled(true), rollingMs);
+    const doneTimeout = setTimeout(onDone, rollingMs + holdMs);
+    return () => {
+      clearTimeout(settleTimeout);
+      clearTimeout(doneTimeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -69,9 +77,20 @@ export function DiceRoll({ onDone }: { onDone: () => void }) {
           <Die key={i} rollingMs={rollingMs} finalIndex={v} />
         ))}
       </div>
-      <span className="text-lg font-bold text-amber-300">
-        {finalValues.reduce((sum, v) => sum + v + 1, 0)}
-      </span>
+      <div className="h-7">
+        <AnimatePresence>
+          {settled && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.7, y: -6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 26 }}
+              className="block text-lg font-bold text-amber-300"
+            >
+              {finalValues.reduce((sum, v) => sum + v + 1, 0)}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }

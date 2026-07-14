@@ -59,7 +59,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] py-6">
+    <main className="bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] sm:h-screen sm:overflow-hidden">
       <GameProvider
         key={gameKey}
         initialState={initialState}

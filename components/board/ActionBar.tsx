@@ -68,7 +68,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   return (
     <motion.div
       layout
-      className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
+      className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-white/90 p-2 shadow-lg backdrop-blur-sm"
     >
       {discardForSelected && selectedTile && (
         <motion.button
