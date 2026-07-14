@@ -1,7 +1,7 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
@@ -10,6 +10,7 @@ import { getLegalActions } from "@/lib/mahjong/reducer";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
+import { fireWinConfetti } from "./confetti";
 import { DiceRoll } from "./DiceRoll";
 import { DiscardBoard } from "./DiscardBoard";
 import { PlayerPanel } from "./PlayerPanel";
@@ -33,6 +34,22 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
   useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+  // Closing the round-end overlay just hides it -- the round is still over
+  // (Next Round/New Match haven't happened) -- so the board can be inspected
+  // as a post-mortem (every hand is revealed once a round ends) without
+  // losing the ability to jump back into the results and continue.
+  const [resultsOpen, setResultsOpen] = useState(true);
+
+  // Fire once per round, the moment the human's win becomes visible --
+  // guarded by a ref (not state) so re-opening the dismissed results
+  // overlay via "View Results" doesn't retrigger it.
+  const confettiFiredRef = useRef(false);
+  useEffect(() => {
+    if (rollingDice || state.turn.phase !== "round-ended" || confettiFiredRef.current) return;
+    if (!state.winners?.some((w) => w.seat === humanSeat)) return;
+    confettiFiredRef.current = true;
+    fireWinConfetti();
+  }, [rollingDice, state.turn.phase, state.winners, humanSeat]);
 
   // Auto-select the tile you just drew -- discarding it (the common case)
   // is then a single tap, instead of having to select it first.
@@ -114,8 +131,26 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {!rollingDice && state.turn.phase === "round-ended" && (
-          <RoundEndOverlay onNextRound={onNextRound} onNewMatch={onNewMatch} />
+        {!rollingDice && state.turn.phase === "round-ended" && resultsOpen && (
+          <RoundEndOverlay
+            onNextRound={onNextRound}
+            onNewMatch={onNewMatch}
+            onDismiss={() => setResultsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!rollingDice && state.turn.phase === "round-ended" && !resultsOpen && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            onClick={() => setResultsOpen(true)}
+            className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 px-4 py-2.5 text-sm font-semibold text-amber-900 shadow-xl hover:from-amber-100 hover:to-yellow-200"
+          >
+            🏆 View Results
+          </motion.button>
         )}
       </AnimatePresence>
     </div>

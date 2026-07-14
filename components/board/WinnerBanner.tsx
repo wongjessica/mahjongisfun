@@ -45,13 +45,18 @@ export function WinnerHand({ winner }: { winner: WinResult }) {
 interface RoundEndOverlayProps {
   onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number]) => void;
   onNewMatch: () => void;
+  /** Dismisses the overlay without advancing the round, so the board behind
+   * it (all hands revealed, full discard piles) can be inspected as a
+   * post-mortem. GameBoard keeps track of the dismissal and offers a way
+   * back in, since Next Round/New Match still need to happen eventually. */
+  onDismiss: () => void;
 }
 
 /** Shown as a centered overlay (like the dice roll), not inline in the page
  * flow -- an inline banner would shove the human's hand and action bar
  * further down the page every time a round ends, which is exactly the kind
  * of layout shuffling that makes the board feel cramped. */
-export function RoundEndOverlay({ onNextRound, onNewMatch }: RoundEndOverlayProps) {
+export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEndOverlayProps) {
   const { state, humanSeat, botNames } = useGame();
 
   const winnerName = (seat: number) => (seat === humanSeat ? "You" : botNames[seat]);
@@ -67,6 +72,7 @@ export function RoundEndOverlay({ onNextRound, onNewMatch }: RoundEndOverlayProp
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      onClick={onDismiss}
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
     >
       <motion.div
@@ -74,8 +80,17 @@ export function RoundEndOverlay({ onNextRound, onNewMatch }: RoundEndOverlayProp
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ type: "spring", stiffness: 350, damping: 26 }}
-        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 p-4 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        className="relative max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 p-4 text-center shadow-2xl"
       >
+        <button
+          onClick={onDismiss}
+          aria-label="Close and view the board"
+          title="Close and view the board"
+          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-amber-700 transition-colors hover:bg-amber-900/10 hover:text-amber-900"
+        >
+          ✕
+        </button>
         {state.isDraw ? (
           <p className="font-semibold text-amber-900">Wall exhausted — no winner this round.</p>
         ) : (
