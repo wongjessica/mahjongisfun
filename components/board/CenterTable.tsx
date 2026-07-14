@@ -5,6 +5,7 @@ import { useGame } from "@/components/game/GameContext";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
+const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "北" };
 
 export function CenterTable() {
   const { state, humanSeat, botNames, anonymousDiscards } = useGame();
@@ -12,6 +13,13 @@ export function CenterTable() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-5 shadow-inner">
+      <div className="flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-950/30 px-3 py-1">
+        <span className="text-lg font-bold leading-none text-amber-300">{WIND_GLYPH[state.roundWind]}</span>
+        <span className="text-xs font-bold uppercase tracking-wide text-amber-200">
+          {WIND_NAMES[state.roundWind]} round
+        </span>
+      </div>
+
       <div className="flex items-center gap-4 text-emerald-50">
         <div className="flex flex-col items-center">
           <span className="text-xl font-bold">{state.wall.liveTiles.length}</span>
@@ -19,8 +27,7 @@ export function CenterTable() {
         </div>
         <div className="h-8 w-px bg-emerald-600/60" />
         <div className="flex flex-col items-center text-xs">
-          <span className="font-semibold">{WIND_NAMES[state.roundWind]} round</span>
-          <span className="text-emerald-200/80">{state.ruleset.fanMinimum}-fan minimum</span>
+          <span className="font-semibold">{state.ruleset.fanMinimum}-fan minimum</span>
         </div>
       </div>
 

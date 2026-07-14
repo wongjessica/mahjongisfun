@@ -37,6 +37,9 @@ export interface InitialStateConfig {
   humanSeat?: number;
   dealerIndex?: number;
   seed: number;
+  /** Carries scores forward across rounds of the same match; defaults to
+   * all zero for a fresh match. */
+  startingScores?: [number, number, number, number];
 }
 
 function resolvePlayerFlowers(
@@ -85,7 +88,7 @@ export function createInitialState(config: InitialStateConfig): GameState {
       melds: [],
       discards: [],
       flowers,
-      score: 0,
+      score: config.startingScores?.[seat] ?? 0,
     });
   }
 

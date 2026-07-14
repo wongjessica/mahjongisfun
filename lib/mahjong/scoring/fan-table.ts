@@ -19,8 +19,6 @@ export interface UnifiedSet {
   kind: "triplet" | "sequence" | "pair" | "single";
   suit: TileSuit;
   rank: number;
-  isKong: boolean;
-  concealed: boolean;
 }
 
 export interface FanEntry {
@@ -39,15 +37,11 @@ export function unify(decomposition: Decomposition): UnifiedSet[] {
     kind: g.kind,
     suit: g.suit,
     rank: g.rank,
-    isKong: false,
-    concealed: true,
   }));
   const fromMelds: UnifiedSet[] = decomposition.melds.map((m) => ({
     kind: m.type === "chi" ? "sequence" : "triplet",
     suit: m.tiles[0].suit,
     rank: m.type === "chi" ? Math.min(...m.tiles.map((t) => t.rank)) : m.tiles[0].rank,
-    isKong: m.type !== "chi" && m.type !== "pon",
-    concealed: m.type === "kongConcealed",
   }));
   return [...fromConcealed, ...fromMelds];
 }
@@ -137,11 +131,6 @@ const concealedHandPattern: FanPattern = (_sets, decomposition) => {
     : null;
 };
 
-const kongBonusPattern: FanPattern = (sets) => {
-  const kongCount = sets.filter((s) => s.isKong).length;
-  return kongCount > 0 ? { label: "Kong Bonus", fan: kongCount } : null;
-};
-
 // Flowers are pure luck (dealt/drawn, no skill or hand-shape involved), so
 // they're kept out of FAN_PATTERNS entirely and applied separately in
 // calculate.ts: capped, and excluded from the fan-minimum qualifying check
@@ -174,7 +163,6 @@ export const FAN_PATTERNS: FanPattern[] = [
   selfDrawPattern,
   dealerPattern,
   concealedHandPattern,
-  kongBonusPattern,
   robbingKongPattern,
   replacementWinPattern,
 ];

@@ -14,7 +14,16 @@ import { DiscardBoard } from "./DiscardBoard";
 import { PlayerPanel } from "./PlayerPanel";
 import { WinnerHand } from "./WinnerBanner";
 
-export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
+interface GameBoardProps {
+  /** Continues the match: same ruleset/settings, dealer and scores carry
+   * forward per the rotation rule (computed here, since that needs the
+   * ended round's state). */
+  onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number]) => void;
+  /** Full reset: back to the setup screen, dealer/scores start fresh. */
+  onNewMatch: () => void;
+}
+
+export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
   const thinkingSeat = useBotDriver();
   useHumanAutoDraw();
   const { state, dispatch, humanSeat, botNames } = useGame();
@@ -45,6 +54,12 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   };
 
   const winnerName = (seat: number) => (seat === humanSeat ? "You" : botNames[seat]);
+
+  // Dealer repeats if they won (or the round drew); otherwise dealership
+  // passes to the next seat in turn order.
+  const dealerRepeats = state.isDraw || (state.winners?.some((w) => w.seat === state.dealerIndex) ?? false);
+  const nextDealerIndex = dealerRepeats ? state.dealerIndex : nextSeat(state.dealerIndex);
+  const startingScores = state.players.map((p) => p.score) as [number, number, number, number];
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-3 p-3 sm:p-4">
@@ -109,12 +124,25 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
                 ))}
               </div>
             )}
-            <button
-              onClick={onNewGame}
-              className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
-            >
-              New Game
-            </button>
+            <p className="mt-3 text-xs text-amber-700">
+              {dealerRepeats
+                ? `${winnerName(state.dealerIndex)} stays dealer next round.`
+                : `Dealership passes to ${winnerName(nextSeat(state.dealerIndex))}.`}
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <button
+                onClick={() => onNextRound(nextDealerIndex, startingScores)}
+                className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
+              >
+                Next Round
+              </button>
+              <button
+                onClick={onNewMatch}
+                className="text-xs font-medium text-amber-700 underline hover:text-amber-900"
+              >
+                New match / change settings
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

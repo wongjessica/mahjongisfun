@@ -139,7 +139,7 @@ describe("scoring", () => {
     expect(isValidWinDeclaration(decompositions, ctx)).toBe(false);
   });
 
-  it("awards kong bonus fan per kong meld, including a replacement-draw self-draw win", () => {
+  it("does not award fan for a kong itself, but does for a replacement-draw self-draw win", () => {
     const concealed = [
       t("characters", 1),
       t("characters", 2),
@@ -169,7 +169,7 @@ describe("scoring", () => {
       baseContext({ selfDraw: true, isReplacementWin: true })
     )!;
     const labels = result.breakdown.map((b) => b.label);
-    expect(labels).toContain("Kong Bonus");
+    expect(labels).not.toContain("Kong Bonus");
     expect(labels).toContain("Kong Replacement Win");
   });
 });
