@@ -21,12 +21,12 @@ const DECORATIVE_TILES = [
   { suit: "winds" as const, rank: 1 },
 ];
 
-const optionBase =
+export const optionBase =
   "flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all";
-const optionActive = "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]";
-const optionInactive = "border-slate-200 text-slate-500 hover:border-slate-300";
+export const optionActive = "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]";
+export const optionInactive = "border-slate-200 text-slate-500 hover:border-slate-300";
 
-function ToggleRow({
+export function ToggleRow({
   label,
   hint,
   checked,
@@ -62,7 +62,13 @@ function ToggleRow({
   );
 }
 
-export function SetupForm({ onStart }: { onStart: (config: SetupConfig) => void }) {
+export function SetupForm({
+  onStart,
+  onPlayOnline,
+}: {
+  onStart: (config: SetupConfig) => void;
+  onPlayOnline?: () => void;
+}) {
   const [fanMinimum, setFanMinimum] = useState<0 | 3>(3);
   const [anonymousDiscards, setAnonymousDiscards] = useState(false);
   const [speed, setSpeed] = useState<GameSpeed>("slow");
@@ -148,6 +154,16 @@ export function SetupForm({ onStart }: { onStart: (config: SetupConfig) => void 
       >
         Start Game
       </motion.button>
+
+      {onPlayOnline && (
+        <button
+          type="button"
+          onClick={onPlayOnline}
+          className="rounded-xl border-2 border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
+        >
+          👥 Play with Friends
+        </button>
+      )}
     </motion.div>
   );
 }

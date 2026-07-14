@@ -21,11 +21,15 @@ interface GameBoardProps {
    * forward per the rotation rule (computed in RoundEndOverlay, which has
    * the ended round's state). */
   onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number]) => void;
-  /** Full reset: back to the setup screen, dealer/scores start fresh. */
+  /** Full reset: back to the setup screen, dealer/scores start fresh.
+   * (Online: leaves the room.) */
   onNewMatch: () => void;
+  /** Shared per-round seed so all online players see the same dice roll;
+   * omit for solo play's genuinely random dice. */
+  diceSeed?: number;
 }
 
-export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
+export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps) {
   // Every fresh mount (a new match or a rotated-dealer "Next Round") starts
   // with its own dice roll, which pauses bot/auto-draw underneath it so
   // nothing plays out invisibly behind the animation.
@@ -121,7 +125,7 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
       <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
 
       <AnimatePresence>
-        {rollingDice && <DiceRoll onDone={() => setRollingDice(false)} />}
+        {rollingDice && <DiceRoll onDone={() => setRollingDice(false)} seed={diceSeed} />}
       </AnimatePresence>
 
       <AnimatePresence>

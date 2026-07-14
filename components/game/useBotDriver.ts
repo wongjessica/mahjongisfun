@@ -9,13 +9,12 @@ import { useGame } from "./GameContext";
 
 const BOT_DELAY_MS = { fast: 120, slow: 550 } as const;
 
-/** The bot seat (if any) that currently has an action pending -- the same
+/** The driven seat (if any) that currently has an action pending -- the same
  * seat useBotDriver is about to act for. Exposed so the UI can show a
  * "thinking" indicator on that seat's panel. */
-export function getPendingBotSeat(state: GameState, humanSeat: number): number | null {
+export function getPendingBotSeat(state: GameState, driveSeats: number[]): number | null {
   if (state.turn.phase === "round-ended") return null;
-  for (let seat = 0; seat < 4; seat++) {
-    if (seat === humanSeat || !state.players[seat].isBot) continue;
+  for (const seat of driveSeats) {
     if (getLegalActions(state, seat).length > 0) return seat;
   }
   return null;
@@ -32,9 +31,9 @@ export function getPendingBotSeat(state: GameState, humanSeat: number): number |
  * is covering the board, so bots don't play out several turns invisibly
  * behind it. */
 export function useBotDriver(paused = false): number | null {
-  const { state, dispatch, humanSeat, speed } = useGame();
+  const { state, dispatch, driveSeats, speed } = useGame();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingSeat = paused ? null : getPendingBotSeat(state, humanSeat);
+  const pendingSeat = paused ? null : getPendingBotSeat(state, driveSeats);
 
   useEffect(() => {
     if (pendingSeat === null) return undefined;

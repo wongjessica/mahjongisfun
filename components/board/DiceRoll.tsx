@@ -42,11 +42,21 @@ function Die({ rollingMs, finalIndex }: { rollingMs: number; finalIndex: number 
  * fairly shuffled by the engine's RNG regardless of the roll), but the game
  * itself is genuinely paused underneath via the caller's bot/auto-draw
  * `paused` flags so nothing plays out invisibly behind it. */
-export function DiceRoll({ onDone }: { onDone: () => void }) {
+export function DiceRoll({ onDone, seed }: { onDone: () => void; seed?: number }) {
   const { speed } = useGame();
   const rollingMs = speed === "fast" ? 450 : 1100;
   const holdMs = speed === "fast" ? 250 : 700;
-  const [finalValues] = useState(() => [randomFaceIndex(), randomFaceIndex(), randomFaceIndex()]);
+  // Online play passes a shared per-round seed so every player at the table
+  // watches the same three dice land -- they're one table, one roll. Solo
+  // (no seed) keeps genuinely random dice.
+  const [finalValues] = useState(() => {
+    if (seed === undefined) return [randomFaceIndex(), randomFaceIndex(), randomFaceIndex()];
+    let h = seed >>> 0;
+    return [0, 1, 2].map(() => {
+      h = (Math.imul(h ^ (h >>> 15), 2246822519) + 0x9e3779b9) >>> 0;
+      return h % 6;
+    });
+  });
   const [settled, setSettled] = useState(false);
 
   useEffect(() => {

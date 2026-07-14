@@ -57,7 +57,7 @@ interface RoundEndOverlayProps {
  * further down the page every time a round ends, which is exactly the kind
  * of layout shuffling that makes the board feel cramped. */
 export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEndOverlayProps) {
-  const { state, humanSeat, botNames } = useGame();
+  const { state, humanSeat, botNames, canAdvanceRound, isOnline } = useGame();
 
   const winnerName = (seat: number) => (seat === humanSeat ? "You" : botNames[seat]);
   const staysVerb = (seat: number) => (seat === humanSeat ? "stay" : "stays");
@@ -117,17 +117,28 @@ export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEnd
             : `Dealership passes to ${winnerName(nextSeat(state.dealerIndex))}.`}
         </p>
         <div className="mt-3 flex items-center justify-center gap-3">
-          <button
-            onClick={() => onNextRound(nextDealerIndex, startingScores)}
-            className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
-          >
-            Next Round
-          </button>
+          {canAdvanceRound ? (
+            <button
+              onClick={() => onNextRound(nextDealerIndex, startingScores)}
+              className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
+            >
+              Next Round
+            </button>
+          ) : (
+            <span className="flex items-center gap-2 text-sm font-medium text-amber-800">
+              <motion.span
+                className="h-1.5 w-1.5 rounded-full bg-amber-600"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+              Waiting for the host to start the next round…
+            </span>
+          )}
           <button
             onClick={onNewMatch}
             className="text-xs font-medium text-amber-700 underline hover:text-amber-900"
           >
-            New match / change settings
+            {isOnline ? "Leave room" : "New match / change settings"}
           </button>
         </div>
       </motion.div>

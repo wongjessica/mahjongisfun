@@ -35,6 +35,11 @@ import { RNG, createRng } from "./rng";
 export interface InitialStateConfig {
   fanMinimum: 0 | 3;
   humanSeat?: number;
+  /** All seats controlled by human players -- takes precedence over
+   * humanSeat when set. Solo play passes one seat (or just humanSeat);
+   * online play passes every seat a real person occupies, with the rest
+   * marked isBot so the bot driver knows what it owns. */
+  humanSeats?: number[];
   dealerIndex?: number;
   seed: number;
   /** Carries scores forward across rounds of the same match; defaults to
@@ -69,7 +74,7 @@ function resolvePlayerFlowers(
 export function createInitialState(config: InitialStateConfig): GameState {
   const rng: RNG = createRng(config.seed);
   const dealerIndex = config.dealerIndex ?? 0;
-  const humanSeat = config.humanSeat ?? 0;
+  const humanSeats = config.humanSeats ?? [config.humanSeat ?? 0];
 
   let wall = buildWall(rng);
   const { hands, wall: wallAfterDeal } = dealInitialHands(wall, dealerIndex);
@@ -83,7 +88,7 @@ export function createInitialState(config: InitialStateConfig): GameState {
     players.push({
       seat,
       seatWind,
-      isBot: seat !== humanSeat,
+      isBot: !humanSeats.includes(seat),
       concealedTiles,
       melds: [],
       discards: [],

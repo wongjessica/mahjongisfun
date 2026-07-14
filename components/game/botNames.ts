@@ -26,10 +26,16 @@ const NAME_POOL = [
  * per game at setup time, not derived from seat/wind, so it stays stable
  * for the whole round. */
 export function assignBotNames(humanSeat: number): Record<number, string> {
+  return assignNamesForSeats([0, 1, 2, 3].filter((seat) => seat !== humanSeat));
+}
+
+/** Same random-distinct naming, for an arbitrary set of bot seats -- online
+ * rooms have anywhere from 0 to 2 bot seats depending on how many humans
+ * joined. */
+export function assignNamesForSeats(seats: number[]): Record<number, string> {
   const pool = [...NAME_POOL];
   const names: Record<number, string> = {};
-  for (let seat = 0; seat < 4; seat++) {
-    if (seat === humanSeat) continue;
+  for (const seat of seats) {
     const index = Math.floor(Math.random() * pool.length);
     names[seat] = pool.splice(index, 1)[0];
   }
