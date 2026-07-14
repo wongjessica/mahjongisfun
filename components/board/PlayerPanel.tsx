@@ -17,6 +17,20 @@ const WIND_AVATAR: Record<number, string> = {
   4: "bg-violet-500",
 };
 
+const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
+
+// Same color as the matching WIND_AVATAR above, just as a light-tinted badge
+// instead of a solid fill -- ties the avatar's color coding to an actual
+// readable label instead of asking players to memorize which color means
+// which wind (the only way to tell your own seat wind before this was
+// noticing the DEALER badge, which only ever shows up for East).
+const WIND_BADGE: Record<number, string> = {
+  1: "bg-amber-100 text-amber-700",
+  2: "bg-rose-100 text-rose-700",
+  3: "bg-sky-100 text-sky-700",
+  4: "bg-violet-100 text-violet-700",
+};
+
 export type SeatPosition = "left" | "across" | "right";
 
 function Avatar({ seatWind, label }: { seatWind: number; label: string }) {
@@ -142,6 +156,11 @@ export function PlayerPanel({
           <div className="leading-tight">
             <div className="flex items-center gap-1 text-sm font-semibold text-slate-800">
               {isHuman ? "You" : botNames[seat]}
+              <span
+                className={`rounded px-1 py-0.5 text-[10px] font-bold ${WIND_BADGE[player.seatWind]}`}
+              >
+                {WIND_NAMES[player.seatWind]}
+              </span>
               {isDealer && (
                 <span className="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
                   DEALER
