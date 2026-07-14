@@ -105,7 +105,7 @@ describe("scoring", () => {
     expect(fans).toEqual([1, 2, 2, 3]);
   });
 
-  it("scales flower bonus fan by count and seat match", () => {
+  it("scales flower bonus fan by count and seat match, up to the flower cap", () => {
     const decompositions = decomposeHand(twoFanHand(), []);
     const flowers: Tile[] = [
       { id: "f1", suit: "flowers", rank: 1 },
@@ -115,8 +115,28 @@ describe("scoring", () => {
       decompositions,
       baseContext({ seatWind: 1, flowers })
     )!;
-    // Concealed Hand (1) + 2 flowers * 1 fan + 1 seat-matching flower (rank 1 === seatWind 1) * 1 fan
-    expect(result.fan).toBe(1 + 2 + 1);
+    // Raw flower fan would be 2 flowers * 1 + 1 seat-matching flower * 1 = 3,
+    // but flowers are capped at ruleset.flowerFanCap (2). Concealed Hand (1) + 2 = 3.
+    expect(result.fan).toBe(1 + 2);
+  });
+
+  it("never lets flowers alone satisfy the fan minimum", () => {
+    // A hand worth nothing but the automatic Concealed Hand bonus (1 fan),
+    // plus enough flowers that their fan would reach the 3-fan minimum if
+    // flowers counted toward it -- they must not.
+    const decompositions = decomposeHand(twoFanHand(), []);
+    const flowers: Tile[] = [
+      { id: "f1", suit: "flowers", rank: 1 },
+      { id: "f2", suit: "flowers", rank: 2 },
+      { id: "f3", suit: "flowers", rank: 3 },
+    ];
+    const ctx = baseContext({ seatWind: 1, flowers, ruleset: createRuleset(3) });
+    const score = bestScore(decompositions, ctx)!;
+    // Total fan (capped) easily clears 3 (1 concealed + 2 capped flowers = 3)...
+    expect(score.fan).toBeGreaterThanOrEqual(3);
+    // ...but qualifying (non-flower) fan is only 1, so the win must be illegal.
+    expect(score.qualifyingFan).toBe(1);
+    expect(isValidWinDeclaration(decompositions, ctx)).toBe(false);
   });
 
   it("awards kong bonus fan per kong meld, including a replacement-draw self-draw win", () => {

@@ -100,6 +100,7 @@ interface TileFaceProps {
   faceDown?: boolean;
   selected?: boolean;
   onClick?: () => void;
+  onDoubleClick?: () => void;
   size?: TileSize;
   /** Set to the tile's stable id to get a smooth FLIP animation when the
    * same tile moves between two places across a render (e.g. hand -> discard
@@ -122,6 +123,7 @@ export function TileFace({
   faceDown,
   selected,
   onClick,
+  onDoubleClick,
   size = "md",
   layoutId,
   highlight,
@@ -165,7 +167,7 @@ export function TileFace({
   };
 
   return (
-    <Wrapper {...sharedProps} {...(onClick ? { type: "button", onClick } : {})}>
+    <Wrapper {...sharedProps} {...(onClick ? { type: "button", onClick, onDoubleClick } : {})}>
       {isBack ? (
         <div
           className="h-full w-full rounded-[5px]"

@@ -7,7 +7,7 @@ import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
 export function CenterTable() {
-  const { state, humanSeat } = useGame();
+  const { state, humanSeat, botNames, anonymousDiscards } = useGame();
   const { lastDiscard } = state;
 
   return (
@@ -36,7 +36,11 @@ export function CenterTable() {
               className="flex flex-col items-center gap-1.5"
             >
               <span className="text-[11px] font-medium text-emerald-100/90">
-                {lastDiscard.seat === humanSeat ? "You" : `${WIND_NAMES[state.players[lastDiscard.seat].seatWind]} bot`}{" "}
+                {anonymousDiscards
+                  ? "Someone"
+                  : lastDiscard.seat === humanSeat
+                    ? "You"
+                    : botNames[lastDiscard.seat]}{" "}
                 discarded
               </span>
               <TileFace tile={lastDiscard.tile} size="lg" animateIn={false} />

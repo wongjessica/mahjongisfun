@@ -10,7 +10,6 @@ import { sortTiles } from "@/lib/mahjong/tiles";
 
 const DEAL_STAGGER_SECONDS = 0.045;
 
-const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_AVATAR: Record<number, string> = {
   1: "bg-amber-500",
   2: "bg-rose-500",
@@ -18,14 +17,30 @@ const WIND_AVATAR: Record<number, string> = {
   4: "bg-violet-500",
 };
 
-function Avatar({ seatWind, isHuman }: { seatWind: number; isHuman: boolean }) {
+export type SeatPosition = "left" | "across" | "right";
+
+function Avatar({ seatWind, label }: { seatWind: number; label: string }) {
   return (
     <div
       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-inner ${WIND_AVATAR[seatWind]}`}
     >
-      {isHuman ? "🙂" : WIND_NAMES[seatWind][0]}
+      {label}
     </div>
   );
+}
+
+/** Flags who you can chi from (the seat immediately before your turn, i.e.
+ * "to your left" in this layout) -- explicit rather than left as an exercise
+ * in turn-order arithmetic. */
+function PositionBadge({ position }: { position: SeatPosition }) {
+  if (position === "left") {
+    return (
+      <span className="rounded bg-sky-100 px-1 py-0.5 text-[10px] font-bold text-sky-700">
+        ← chi from here
+      </span>
+    );
+  }
+  return <span className="text-[10px] font-medium text-slate-400">{position}</span>;
 }
 
 /** A compact "N tiles in hand" indicator for opponents -- showing a full
@@ -72,8 +87,10 @@ interface PlayerPanelProps {
   isHuman: boolean;
   selectedTileId?: string | null;
   onSelectTile?: (tileId: string) => void;
+  onDiscardTile?: (tileId: string) => void;
   isThinking?: boolean;
   handSize?: TileSize;
+  position?: SeatPosition;
 }
 
 export function PlayerPanel({
@@ -81,17 +98,23 @@ export function PlayerPanel({
   isHuman,
   selectedTileId,
   onSelectTile,
+  onDiscardTile,
   isThinking,
   handSize = "md",
+  position,
 }: PlayerPanelProps) {
-  const { state, speed } = useGame();
+  const { state, speed, botNames } = useGame();
   const player = state.players[seat];
   const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
   const isDealer = state.dealerIndex === seat;
+  const isRoundEnded = state.turn.phase === "round-ended";
+  // Hands stay hidden during play (bots are face-down), but once the round
+  // ends everyone's tiles are revealed so a win (or draw) can be checked.
+  const revealHand = isHuman || isRoundEnded;
 
   const showDrawnSeparately = isHuman && state.lastDraw?.seat === seat && isActive;
   const drawnTileId = showDrawnSeparately ? state.lastDraw!.tile.id : null;
-  const handTiles = isHuman
+  const handTiles = revealHand
     ? sortTiles(player.concealedTiles.filter((t) => t.id !== drawnTileId))
     : [];
 
@@ -115,15 +138,16 @@ export function PlayerPanel({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Avatar seatWind={player.seatWind} isHuman={isHuman} />
+          <Avatar seatWind={player.seatWind} label={isHuman ? "🙂" : botNames[seat][0]} />
           <div className="leading-tight">
             <div className="flex items-center gap-1 text-sm font-semibold text-slate-800">
-              {isHuman ? "You" : `Bot · ${WIND_NAMES[player.seatWind]}`}
+              {isHuman ? "You" : botNames[seat]}
               {isDealer && (
                 <span className="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
                   DEALER
                 </span>
               )}
+              {!isHuman && position && <PositionBadge position={position} />}
             </div>
             {isThinking && (
               <motion.span
@@ -166,7 +190,7 @@ export function PlayerPanel({
         </div>
       )}
 
-      {isHuman ? (
+      {revealHand ? (
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-wrap gap-1">
             <AnimatePresence>
@@ -177,7 +201,10 @@ export function PlayerPanel({
                   size={handSize}
                   layoutId={tile.id}
                   selected={tile.id === selectedTileId}
-                  onClick={onSelectTile ? () => onSelectTile(tile.id) : undefined}
+                  onClick={isHuman && onSelectTile ? () => onSelectTile(tile.id) : undefined}
+                  onDoubleClick={
+                    isHuman && onDiscardTile ? () => onDiscardTile(tile.id) : undefined
+                  }
                   speed={speed}
                   enterDelay={dealStagger ? i * DEAL_STAGGER_SECONDS : 0}
                 />
@@ -203,6 +230,7 @@ export function PlayerPanel({
                   layoutId={state.lastDraw!.tile.id}
                   selected={state.lastDraw!.tile.id === selectedTileId}
                   onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
+                  onDoubleClick={onDiscardTile ? () => onDiscardTile(state.lastDraw!.tile.id) : undefined}
                   highlight
                   speed={speed}
                 />

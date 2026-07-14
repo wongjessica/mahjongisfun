@@ -6,7 +6,6 @@ import { LabeledTile } from "@/components/tiles/LabeledTile";
 import { Tile } from "@/lib/mahjong/tiles";
 import { nextSeat } from "@/lib/mahjong/state";
 
-const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_DOT: Record<number, string> = {
   1: "bg-amber-500",
   2: "bg-rose-500",
@@ -24,7 +23,7 @@ function hashUnit(id: string, salt: number): number {
 }
 
 function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; isFirst: boolean }) {
-  const { state, speed } = useGame();
+  const { state, speed, botNames } = useGame();
   const player = state.players[seat];
   const lastDiscardId =
     state.lastDiscard && state.lastDiscard.seat === seat ? state.lastDiscard.tile.id : null;
@@ -35,7 +34,7 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
       <div className={`flex items-center gap-1.5 pt-1.5 ${rowBorder}`}>
         <span className={`h-2 w-2 shrink-0 rounded-full ${WIND_DOT[player.seatWind]}`} />
         <span className="truncate text-xs font-semibold text-slate-600">
-          {isHuman ? "You" : WIND_NAMES[player.seatWind]}
+          {isHuman ? "You" : botNames[seat]}
         </span>
       </div>
       <div

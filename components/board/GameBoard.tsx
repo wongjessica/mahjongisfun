@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
+import { toGameAction } from "@/lib/mahjong/actions";
+import { getLegalActions } from "@/lib/mahjong/reducer";
 import { nextSeat } from "@/lib/mahjong/state";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
@@ -15,7 +17,7 @@ import { WinnerHand } from "./WinnerBanner";
 export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   const thinkingSeat = useBotDriver();
   useHumanAutoDraw();
-  const { state, humanSeat } = useGame();
+  const { state, dispatch, humanSeat, botNames } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
 
   // Auto-select the tile you just drew -- discarding it (the common case)
@@ -30,20 +32,49 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
   const topSeat = nextSeat(rightSeat);
   const leftSeat = nextSeat(topSeat);
 
+  // Double-clicking a hand tile discards it directly, skipping the
+  // select-then-tap-Discard step, when that's actually a legal move.
+  const handleDiscardTile = (tileId: string) => {
+    const discardAction = getLegalActions(state, humanSeat).find(
+      (a) => a.type === "DISCARD" && a.tileId === tileId
+    );
+    if (discardAction) {
+      dispatch(toGameAction(discardAction, humanSeat));
+      setSelectedTileId(null);
+    }
+  };
+
+  const winnerName = (seat: number) => (seat === humanSeat ? "You" : botNames[seat]);
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-3 p-3 sm:p-4">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1.1fr_0.9fr_1.1fr] sm:items-start">
         <div className="order-3 sm:order-1">
-          <PlayerPanel seat={leftSeat} isHuman={false} isThinking={thinkingSeat === leftSeat} />
+          <PlayerPanel
+            seat={leftSeat}
+            isHuman={false}
+            isThinking={thinkingSeat === leftSeat}
+            position="left"
+          />
         </div>
 
         <div className="order-1 flex flex-col gap-2 sm:order-2">
-          <PlayerPanel seat={topSeat} isHuman={false} isThinking={thinkingSeat === topSeat} />
+          <PlayerPanel
+            seat={topSeat}
+            isHuman={false}
+            isThinking={thinkingSeat === topSeat}
+            position="across"
+          />
           <CenterTable />
         </div>
 
         <div className="order-4 sm:order-3">
-          <PlayerPanel seat={rightSeat} isHuman={false} isThinking={thinkingSeat === rightSeat} />
+          <PlayerPanel
+            seat={rightSeat}
+            isHuman={false}
+            isThinking={thinkingSeat === rightSeat}
+            position="right"
+          />
         </div>
       </div>
 
@@ -66,7 +97,7 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
                   <div key={winner.seat} className="flex flex-col items-center gap-2">
                     <div>
                       <p className="font-bold text-amber-900">
-                        {winner.seat === humanSeat ? "You" : "Bot"} won with {winner.fan} fan
+                        {winnerName(winner.seat)} won with {winner.fan} fan
                         {winner.selfDraw ? " (self-draw)" : ""}
                       </p>
                       <p className="text-xs text-amber-700">
@@ -93,6 +124,7 @@ export function GameBoard({ onNewGame }: { onNewGame: () => void }) {
         isHuman
         selectedTileId={selectedTileId}
         onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
+        onDiscardTile={handleDiscardTile}
         handSize="lg"
       />
 

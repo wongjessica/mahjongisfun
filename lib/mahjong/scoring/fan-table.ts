@@ -142,11 +142,16 @@ const kongBonusPattern: FanPattern = (sets) => {
   return kongCount > 0 ? { label: "Kong Bonus", fan: kongCount } : null;
 };
 
-const flowerBonusPattern: FanPattern = (_sets, _decomposition, ctx) => {
+// Flowers are pure luck (dealt/drawn, no skill or hand-shape involved), so
+// they're kept out of FAN_PATTERNS entirely and applied separately in
+// calculate.ts: capped, and excluded from the fan-minimum qualifying check
+// (a hand can never win on flowers alone).
+export const flowerBonusPattern: FanPattern = (_sets, _decomposition, ctx) => {
   if (ctx.flowers.length === 0) return null;
   const matching = ctx.flowers.filter((f) => f.rank === ctx.seatWind).length;
-  const fan =
+  const rawFan =
     ctx.flowers.length * ctx.ruleset.flowerFanEach + matching * ctx.ruleset.seatMatchFlowerFanEach;
+  const fan = Math.min(rawFan, ctx.ruleset.flowerFanCap);
   return fan > 0 ? { label: "Flowers", fan } : null;
 };
 
@@ -156,6 +161,7 @@ const robbingKongPattern: FanPattern = (_sets, _decomposition, ctx) =>
 const replacementWinPattern: FanPattern = (_sets, _decomposition, ctx) =>
   ctx.isReplacementWin ? { label: "Kong Replacement Win", fan: 1 } : null;
 
+// flowerBonusPattern is deliberately NOT included here -- see its own comment.
 export const FAN_PATTERNS: FanPattern[] = [
   thirteenOrphansPattern,
   sevenPairsPattern,
@@ -169,7 +175,6 @@ export const FAN_PATTERNS: FanPattern[] = [
   dealerPattern,
   concealedHandPattern,
   kongBonusPattern,
-  flowerBonusPattern,
   robbingKongPattern,
   replacementWinPattern,
 ];
