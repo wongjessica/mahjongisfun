@@ -111,26 +111,27 @@ export function DiscardBoard() {
   return (
     <motion.div
       layout
-      className="flex flex-col rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm sm:h-full"
+      className="flex flex-col rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
     >
-      <h2 className="mb-1.5 shrink-0 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+      <h2 className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
         Discards {anonymousDiscards && <span className="normal-case text-slate-300">(anonymous)</span>}
       </h2>
-      {/* On desktop this scrolls internally within whatever height the page
-          layout allocates, so a long discard pile never pushes the human's
-          hand/action bar (or the opponents above) out of the viewport. */}
-      <div className="min-h-0 sm:flex-1 sm:overflow-y-auto">
-        {anonymousDiscards ? (
-          <AnonymousPool tiles={allDiscards} lastDiscardId={lastDiscardId} />
-        ) : (
-          <div className="grid grid-cols-[4.5rem_1fr]">
-            <SeatRow seat={humanSeat} isHuman isFirst />
-            <SeatRow seat={rightSeat} isHuman={false} isFirst={false} />
-            <SeatRow seat={topSeat} isHuman={false} isFirst={false} />
-            <SeatRow seat={leftSeat} isHuman={false} isFirst={false} />
-          </div>
-        )}
-      </div>
+      {/* Sized to its actual content rather than squeezed into whatever
+          leftover space the page has -- a discard pile that's genuinely
+          taller than the viewport scrolls the whole page rather than
+          disappearing into a collapsed internal-scroll box (which could
+          shrink to ~0px once the hand/action bar above grew, hiding every
+          discard with no visible way to scroll to them). */}
+      {anonymousDiscards ? (
+        <AnonymousPool tiles={allDiscards} lastDiscardId={lastDiscardId} />
+      ) : (
+        <div className="grid grid-cols-[4.5rem_1fr]">
+          <SeatRow seat={humanSeat} isHuman isFirst />
+          <SeatRow seat={rightSeat} isHuman={false} isFirst={false} />
+          <SeatRow seat={topSeat} isHuman={false} isFirst={false} />
+          <SeatRow seat={leftSeat} isHuman={false} isFirst={false} />
+        </div>
+      )}
     </motion.div>
   );
 }

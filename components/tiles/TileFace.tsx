@@ -109,6 +109,19 @@ interface TileFaceProps {
   /** Adds a soft amber glow, used to call out the just-discarded tile. */
   highlight?: boolean;
   animateIn?: boolean;
+  /** Framer Motion's `layout` prop smoothly animates ANY position/size shift
+   * from a reflow, not just the ones layoutId is meant for -- which means a
+   * tile sitting right under a text label (e.g. the "Drawn" slot) can slide
+   * through that label mid-transition whenever a sibling changes height
+   * (a new flower, a hand row wrapping). Set false for tiles that don't
+   * need FLIP smoothness so a reflow just snaps them into place instead. */
+  layoutAnimate?: boolean;
+  /** A selected/hovered tile normally lifts by a few px (a "picked up off
+   * the rack" cue) -- but that's a CSS transform, not a layout change, so it
+   * can slide the tile straight into whatever sits right above it (e.g. the
+   * "Drawn" slot's label, which has little clearance). Set false for tiles
+   * in a tightly-spaced spot that doesn't need the lift cue. */
+  lift?: boolean;
   /** Fast: snappier, near-instant. Slow: gentler, more "immersive" spring.
    * Defaults to "slow" so callers outside a game (e.g. the setup screen's
    * decorative tiles) keep the original cinematic feel. */
@@ -128,6 +141,8 @@ export function TileFace({
   layoutId,
   highlight,
   animateIn = true,
+  layoutAnimate = true,
+  lift = true,
   speed = "slow",
   enterDelay = 0,
 }: TileFaceProps) {
@@ -142,12 +157,12 @@ export function TileFace({
 
   const sharedProps = {
     title: tile ? tileLabel(tile) : undefined,
-    layout: true,
+    layout: layoutAnimate,
     layoutId,
     initial: animateIn ? { opacity: 0, y: -14, scale: 0.85 } : false,
-    animate: { opacity: 1, y: selected ? -10 : 0, scale: 1 },
+    animate: { opacity: 1, y: selected && lift ? -10 : 0, scale: 1 },
     exit: { opacity: 0, scale: 0.55, y: 12 },
-    whileHover: onClick ? { y: -6 } : undefined,
+    whileHover: onClick && lift ? { y: -6 } : undefined,
     whileTap: onClick ? { scale: 0.94 } : undefined,
     // Delay only the entrance (opacity/y/scale), never layout repositioning
     // -- a delayed FLIP would make repositioning feel laggy in slow mode.

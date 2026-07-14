@@ -76,8 +76,8 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 p-2 sm:h-full sm:overflow-hidden sm:p-3">
-      <div className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-[1.1fr_0.9fr_1.1fr] sm:items-start">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-1.5 p-2 sm:p-2.5">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[1.1fr_0.9fr_1.1fr] sm:items-start">
         <div className="order-3 sm:order-1">
           <PlayerPanel
             seat={leftSeat}
@@ -87,7 +87,7 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
           />
         </div>
 
-        <div className="order-1 flex flex-col gap-2 sm:order-2">
+        <div className="order-1 flex flex-col gap-1.5 sm:order-2">
           <PlayerPanel
             seat={topSeat}
             isHuman={false}
@@ -107,24 +107,18 @@ export function GameBoard({ onNextRound, onNewMatch }: GameBoardProps) {
         </div>
       </div>
 
-      <div className="min-h-0 sm:flex-1">
-        <DiscardBoard />
-      </div>
+      <DiscardBoard />
 
-      <div className="shrink-0">
-        <PlayerPanel
-          seat={humanSeat}
-          isHuman
-          selectedTileId={selectedTileId}
-          onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
-          onDiscardTile={handleDiscardTile}
-          handSize="md"
-        />
-      </div>
+      <PlayerPanel
+        seat={humanSeat}
+        isHuman
+        selectedTileId={selectedTileId}
+        onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
+        onDiscardTile={handleDiscardTile}
+        handSize="md"
+      />
 
-      <div className="shrink-0">
-        <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
-      </div>
+      <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
 
       <AnimatePresence>
         {rollingDice && <DiceRoll onDone={() => setRollingDice(false)} />}

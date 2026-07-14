@@ -233,6 +233,8 @@ export function PlayerPanel({
                   onDoubleClick={onDiscardTile ? () => onDiscardTile(state.lastDraw!.tile.id) : undefined}
                   highlight
                   animateIn={false}
+                  layoutAnimate={false}
+                  lift={false}
                   speed={speed}
                 />
                 <span className="text-[9px] font-medium text-amber-700">
