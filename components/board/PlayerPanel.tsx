@@ -232,6 +232,7 @@ export function PlayerPanel({
                   onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
                   onDoubleClick={onDiscardTile ? () => onDiscardTile(state.lastDraw!.tile.id) : undefined}
                   highlight
+                  animateIn={false}
                   speed={speed}
                 />
                 <span className="text-[9px] font-medium text-amber-700">
