@@ -182,7 +182,9 @@ describe("mahjongReducer turn loop", () => {
   it("gates DECLARE_WIN out of the legal-actions list under a 3-fan minimum", () => {
     // A fully concealed hand with no named pattern scores Self-Draw (1) +
     // Concealed Hand (1) = 2 fan for a non-dealer self-draw -- legal to
-    // declare at 0-fan minimum, illegal at 3-fan minimum.
+    // declare at 0-fan minimum, illegal at 3-fan minimum. One set is a
+    // triplet (rather than all four being chows) so it doesn't also pick up
+    // the All Sequences pattern.
     const hand = [
       t("characters", 1),
       t("characters", 2),
@@ -194,8 +196,8 @@ describe("mahjongReducer turn loop", () => {
       t("dots", 8),
       t("dots", 9),
       t("characters", 5),
-      t("characters", 6),
-      t("characters", 7),
+      t("characters", 5),
+      t("characters", 5),
       t("dots", 2),
       t("dots", 2),
     ];

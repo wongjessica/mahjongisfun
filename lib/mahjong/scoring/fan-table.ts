@@ -66,6 +66,21 @@ const allTripletsPattern: FanPattern = (sets, decomposition) => {
   return null;
 };
 
+// "Ping Wu" / All Sequences: all 4 sets are chows (no triplets/kongs,
+// concealed or exposed either way), and the pair isn't a dragon or the
+// holder's own seat/round wind (those are scored via dragonPattern /
+// seatRoundWindPattern instead, on a triplet -- a pair of them carries no
+// value of its own, but this pattern still requires it be an unvalued pair).
+const allSequencesPattern: FanPattern = (sets, decomposition, ctx) => {
+  if (decomposition.kind !== "standard") return null;
+  const nonPair = sets.filter((s) => s.kind !== "pair");
+  if (nonPair.length !== 4 || !nonPair.every((s) => s.kind === "sequence")) return null;
+  const pair = sets.find((s) => s.kind === "pair");
+  if (!pair || pair.suit === "dragons") return null;
+  if (pair.suit === "winds" && (pair.rank === ctx.seatWind || pair.rank === ctx.roundWind)) return null;
+  return { label: "All Sequences", fan: 1 };
+};
+
 const allHonorsPattern: FanPattern = (sets, decomposition) => {
   if (decomposition.kind !== "standard") return null;
   if (sets.every((s) => !isSuitType(s.suit))) return { label: "All Honors", fan: 10 };
@@ -153,6 +168,7 @@ export const FAN_PATTERNS: FanPattern[] = [
   sevenPairsPattern,
   flushPattern,
   allTripletsPattern,
+  allSequencesPattern,
   allHonorsPattern,
   dragonPattern,
   fourWindsPattern,

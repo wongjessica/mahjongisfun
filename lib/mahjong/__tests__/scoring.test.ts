@@ -4,6 +4,7 @@ import { bestScore, isValidWinDeclaration } from "../scoring/calculate";
 import { ScoringContext } from "../scoring/fan-table";
 import { createRuleset } from "../scoring/ruleset";
 import {
+  allSequencesHand,
   allTripletsHand,
   ambiguousDecompositionHand,
   fullFlushHand,
@@ -51,6 +52,74 @@ describe("scoring", () => {
     const decompositions = decomposeHand(allTripletsHand(), []);
     const result = bestScore(decompositions, baseContext())!;
     expect(result.breakdown.map((b) => b.label)).toContain("All Triplets");
+  });
+
+  it("scores an all-chows hand (two overlapping same-suit runs) with All Sequences", () => {
+    const decompositions = decomposeHand(allSequencesHand(), []);
+    const result = bestScore(decompositions, baseContext())!;
+    expect(result.breakdown.map((b) => b.label)).toContain("All Sequences");
+    expect(result.fan).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not award All Sequences when the pair is the seat or round wind", () => {
+    const decompositions = decomposeHand(allSequencesHand(), []);
+    // allSequencesHand's pair is North Wind (rank 4).
+    const bySeat = bestScore(decompositions, baseContext({ seatWind: 4 }))!;
+    expect(bySeat.breakdown.map((b) => b.label)).not.toContain("All Sequences");
+
+    const byRound = bestScore(decompositions, baseContext({ roundWind: 4 }))!;
+    expect(byRound.breakdown.map((b) => b.label)).not.toContain("All Sequences");
+  });
+
+  it("reproduces the reported hand: half flush + flower + all sequences = 5 fan", () => {
+    // Exposed chows 2-3-4 and 6-7-8 bamboo, concealed 1-2-3 and 7-8-9
+    // bamboo, South Wind pair, plus one seat-matching flower.
+    const concealed = [
+      t("bamboo", 1),
+      t("bamboo", 2),
+      t("bamboo", 3),
+      t("bamboo", 7),
+      t("bamboo", 8),
+      t("bamboo", 9),
+      t("winds", 2),
+      t("winds", 2),
+    ];
+    const melds: Meld[] = [
+      { type: "chi", tiles: [t("bamboo", 2), t("bamboo", 3), t("bamboo", 4)] },
+      { type: "chi", tiles: [t("bamboo", 6), t("bamboo", 7), t("bamboo", 8)] },
+    ];
+    const decompositions = decomposeHand(concealed, melds);
+    // Winner is dealer (East seat, East round) -- the South Wind pair is
+    // neither, so it stays an unvalued pair and All Sequences applies.
+    const flowers: Tile[] = [{ id: "f1", suit: "flowers", rank: 1 }];
+    const result = bestScore(decompositions, baseContext({ seatWind: 1, roundWind: 1, flowers }))!;
+    const labels = result.breakdown.map((b) => b.label);
+    expect(labels).toContain("Half Flush");
+    expect(labels).toContain("All Sequences");
+    expect(labels).toContain("Flowers");
+    expect(result.fan).toBe(5);
+  });
+
+  it("does not award All Sequences when the pair is a dragon", () => {
+    const concealed = [
+      t("characters", 1),
+      t("characters", 2),
+      t("characters", 3),
+      t("bamboo", 4),
+      t("bamboo", 5),
+      t("bamboo", 6),
+      t("dots", 7),
+      t("dots", 8),
+      t("dots", 9),
+      t("characters", 5),
+      t("characters", 6),
+      t("characters", 7),
+      t("dragons", 1),
+      t("dragons", 1),
+    ];
+    const decompositions = decomposeHand(concealed, []);
+    const result = bestScore(decompositions, baseContext())!;
+    expect(result.breakdown.map((b) => b.label)).not.toContain("All Sequences");
   });
 
   it("scores seven pairs at a fixed fan value", () => {

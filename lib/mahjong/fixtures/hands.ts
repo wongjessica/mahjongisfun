@@ -133,7 +133,9 @@ export function ambiguousDecompositionHand(): Tile[] {
 }
 
 /** A plain 2-fan hand (self-draw + dealer, no named patterns) for testing
- * the 0-fan vs 3-fan minimum win-declaration gate. */
+ * the 0-fan vs 3-fan minimum win-declaration gate. One set is a triplet
+ * (rather than all four being chows) so it doesn't also pick up the All
+ * Sequences pattern. */
 export function twoFanHand(): Tile[] {
   return hand([
     ["characters", 1],
@@ -146,10 +148,35 @@ export function twoFanHand(): Tile[] {
     ["dots", 8],
     ["dots", 9],
     ["characters", 5],
-    ["characters", 6],
-    ["characters", 7],
+    ["characters", 5],
+    ["characters", 5],
     ["dots", 2],
     ["dots", 2],
+  ]);
+}
+
+/** All four sets are chows (two overlapping runs of same-suit bamboo:
+ * 1-2-3/2-3-4 and 6-7-8/7-8-9), the shape reported as under-scored. Pair is
+ * North Wind (rank 4) -- deliberately not the default baseContext's
+ * seat/round wind (2/1 in scoring.test.ts), so this hand qualifies for All
+ * Sequences by default and a separate test can flip seatWind to 4 to check
+ * the disqualification path. */
+export function allSequencesHand(): Tile[] {
+  return hand([
+    ["bamboo", 1],
+    ["bamboo", 2],
+    ["bamboo", 2],
+    ["bamboo", 3],
+    ["bamboo", 3],
+    ["bamboo", 4],
+    ["bamboo", 6],
+    ["bamboo", 7],
+    ["bamboo", 7],
+    ["bamboo", 8],
+    ["bamboo", 8],
+    ["bamboo", 9],
+    ["winds", 4],
+    ["winds", 4],
   ]);
 }
 
