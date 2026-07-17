@@ -87,6 +87,32 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
     }
   }, [drawnTileId]);
 
+  // Auto-scroll to your action area the moment it's actually your turn to
+  // decide something -- mobile's natural page scroll means the action bar
+  // can sit well below the fold behind a tall opponents/discard log, and
+  // pinning it (tried previously) fought with tile animations instead.
+  // Fires only on the rising edge (no actions -> some actions), not on
+  // every re-render while you're still deciding, so it doesn't yank the
+  // page out from under you mid-thought. Forced auto-draw/flower-replace
+  // (the only-one-legal-action case) doesn't count as "your turn" -- that
+  // resolves itself with no input needed.
+  const actionBarRef = useRef<HTMLDivElement>(null);
+  const wasActingRef = useRef(false);
+  useEffect(() => {
+    if (rollingDice) {
+      wasActingRef.current = false;
+      return;
+    }
+    const legal = getLegalActions(state, humanSeat);
+    const isActionable =
+      legal.length > 0 &&
+      !(legal.length === 1 && (legal[0].type === "DRAW" || legal[0].type === "REPLACE_FLOWER"));
+    if (isActionable && !wasActingRef.current) {
+      actionBarRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    wasActingRef.current = isActionable;
+  }, [state, humanSeat, rollingDice]);
+
   const rightSeat = nextSeat(humanSeat);
   const topSeat = nextSeat(rightSeat);
   const leftSeat = nextSeat(topSeat);
@@ -141,22 +167,16 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
           wind / tiles left / latest discard are always in view. */}
       <CenterTable />
 
-      {/* Sticky to the bottom of the viewport (not just the page) -- this is
-          the fix for "I always have to scroll down to make my move": your
-          hand and the Discard button are now on-screen at all times, no
-          matter how tall the opponents/discard log above have grown. The
-          background matches the page gradient so content scrolling past
-          underneath doesn't show through the gap around the cards. */}
-      <div className="sticky bottom-0 z-20 -mx-2 flex flex-col gap-1.5 bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] px-2 pb-2 pt-1.5 sm:static sm:mx-0 sm:bg-none sm:px-0 sm:pb-0 sm:pt-0">
-        <PlayerPanel
-          seat={humanSeat}
-          isHuman
-          selectedTileId={selectedTileId}
-          onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
-          onDiscardTile={handleDiscardTile}
-          handSize="md"
-        />
+      <PlayerPanel
+        seat={humanSeat}
+        isHuman
+        selectedTileId={selectedTileId}
+        onSelectTile={(tileId) => setSelectedTileId((prev) => (prev === tileId ? null : tileId))}
+        onDiscardTile={handleDiscardTile}
+        handSize="md"
+      />
 
+      <div ref={actionBarRef}>
         <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
       </div>
 
