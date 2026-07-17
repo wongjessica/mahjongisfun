@@ -6,8 +6,8 @@ export interface ScoreResult {
   fan: number;
   /** Uncapped fan total, checked against the table's fan minimum. Every
    * fan counts here -- including your own seat's flower/season fan and the
-   * No Flowers bonus (house rule: own flowers definitely count toward the
-   * minimum). */
+   * No Flowers bonus (standard HK rule: your own flowers count toward the
+   * minimum same as any other fan). */
   qualifyingFan: number;
   breakdown: FanEntry[];
   decomposition: Decomposition;

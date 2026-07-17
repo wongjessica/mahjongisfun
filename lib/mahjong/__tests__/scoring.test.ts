@@ -229,7 +229,7 @@ describe("scoring", () => {
     expect(offSeatResult.fan).toBe(1); // Concealed Hand only
   });
 
-  it("counts your own flowers toward the fan minimum (house rule)", () => {
+  it("counts your own flowers toward the fan minimum (standard HK rule)", () => {
     // Concealed Hand (1) + two seat-matching bonus tiles (own flower + own
     // season, 2) = 3 -- flowers definitely count toward the minimum, so
     // this clears a 3-fan table.
