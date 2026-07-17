@@ -25,7 +25,7 @@ function hashCode(input: string): number {
 const JOIN_ERROR_TEXT: Record<JoinError, string> = {
   "not-found": "No room with that code. Double-check it (codes never contain 0, O, 1, I, or L).",
   full: "That room already has 4 players.",
-  "in-progress": "That game already started without you in it.",
+  "in-progress": "That game is in progress and every seat has a player. (If someone leaves mid-game, joining with this code takes over their seat.)",
 };
 
 /** Entry screen for online play: pick a name, then create a room or join

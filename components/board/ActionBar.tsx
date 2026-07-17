@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { LegalAction, toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
+import { tileKey } from "@/lib/mahjong/tiles";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 
 const btnBase =
@@ -60,10 +61,22 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   const passAction = legal.find((a) => a.type === "PASS");
   const ponAction = legal.find((a) => a.type === "CALL_PON");
   const chiActions = legal.filter((a) => a.type === "CALL_CHI");
-  const kongActions = legal.filter(
-    (a) =>
-      a.type === "CALL_KONG_EXPOSED" || a.type === "CALL_KONG_CONCEALED" || a.type === "CALL_KONG_ADDED"
-  );
+  // Own-turn kongs (concealed/added) stay LEGAL on every later turn you
+  // still hold the tiles, but the button only shows on the turn you
+  // actually drew the fourth tile -- otherwise it nags every single turn
+  // until you kong. Exposed kong (off a discard) always shows: that window
+  // only exists once.
+  const drawnKey =
+    state.lastDraw?.seat === humanSeat ? tileKey(state.lastDraw.tile) : null;
+  const kongActions = legal.filter((a) => {
+    if (a.type === "CALL_KONG_EXPOSED") return true;
+    if (a.type === "CALL_KONG_CONCEALED") return a.tileKey === drawnKey;
+    if (a.type === "CALL_KONG_ADDED") {
+      const tile = player.concealedTiles.find((t) => t.id === a.tileId);
+      return tile !== undefined && tileKey(tile) === drawnKey;
+    }
+    return false;
+  });
 
   return (
     <motion.div

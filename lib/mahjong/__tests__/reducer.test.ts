@@ -209,6 +209,9 @@ describe("mahjongReducer turn loop", () => {
         // Mid-game wall: an empty wall would add the Last Tile bonus fan
         // and defeat the point of a below-minimum hand.
         wall: { liveTiles: [t("dots", 5)], deadWall: [] },
+        // The 14th tile was genuinely drawn -- self-turn wins are only
+        // legal with a just-drawn tile in hand.
+        lastDraw: { tile: hand[13], seat: 0 },
         ruleset: createRuleset(0),
       }),
       0,
@@ -218,6 +221,72 @@ describe("mahjongReducer turn loop", () => {
 
     const threeFanState = { ...zeroFanState, ruleset: createRuleset(3) };
     expect(getLegalActions(threeFanState, 0).some((a) => a.type === "DECLARE_WIN")).toBe(false);
+  });
+
+  it("forbids declaring a win right after a call (no phantom self-draw), but allows it after a real draw", () => {
+    // A complete 14-tile hand in awaiting-discard, but lastDraw is null --
+    // exactly the state a pon/chi leaves behind (calls clear lastDraw).
+    const hand = [
+      t("characters", 1), t("characters", 2), t("characters", 3),
+      t("bamboo", 4), t("bamboo", 5), t("bamboo", 6),
+      t("dots", 7), t("dots", 8), t("dots", 9),
+      t("characters", 5), t("characters", 5), t("characters", 5),
+      t("dots", 2), t("dots", 2),
+    ];
+    const base = withPlayer(
+      makeTestState({
+        turn: { phase: "awaiting-discard", activeSeat: 0 },
+        dealerIndex: 1,
+        ruleset: createRuleset(0),
+      }),
+      0,
+      { concealedTiles: hand }
+    );
+    // Mark the round as no longer fresh (a discard exists elsewhere), so
+    // the heavenly-hand exception can't apply either.
+    const postCall = withPlayer(base, 2, { discards: [t("winds", 1)] });
+    expect(getLegalActions(postCall, 0).some((a) => a.type === "DECLARE_WIN")).toBe(false);
+    // The reducer itself must also refuse a forced dispatch.
+    expect(mahjongReducer(postCall, { type: "DECLARE_WIN", seat: 0 }).turn.phase).toBe("awaiting-discard");
+
+    const afterDraw = { ...postCall, lastDraw: { tile: hand[13], seat: 0 } };
+    expect(getLegalActions(afterDraw, 0).some((a) => a.type === "DECLARE_WIN")).toBe(true);
+
+    // Heavenly hand: the dealer's very first action of an untouched round.
+    const heavenly = withPlayer(
+      makeTestState({
+        turn: { phase: "awaiting-discard", activeSeat: 0 },
+        dealerIndex: 0,
+        ruleset: createRuleset(0),
+      }),
+      0,
+      { concealedTiles: hand }
+    );
+    expect(getLegalActions(heavenly, 0).some((a) => a.type === "DECLARE_WIN")).toBe(true);
+  });
+
+  it("stores chi melds in rank order regardless of which tile was called", () => {
+    const discard = t("characters", 3);
+    const low = t("characters", 4);
+    const high = t("characters", 5);
+    const state = withPlayer(
+      makeTestState({
+        turn: { phase: "awaiting-call-responses", activeSeat: 0 },
+        pendingCallWindow: {
+          discardedTile: discard,
+          discardingSeat: 0,
+          eligibleSeats: [1],
+          responses: {},
+          winOnly: false,
+        },
+      }),
+      1,
+      { concealedTiles: [high, low, t("dots", 9), t("winds", 2)] }
+    );
+    const next = mahjongReducer(state, { type: "CALL_CHI", seat: 1, tileIds: [high.id, low.id] });
+    const meld = next.players[1].melds[0];
+    expect(meld.type).toBe("chi");
+    expect(meld.tiles.map((tile) => tile.rank)).toEqual([3, 4, 5]);
   });
 
   it("advances the table wind only after every seat has been dealer", () => {

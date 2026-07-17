@@ -290,8 +290,24 @@ function handleDiscard(state: GameState, tileId: string): GameState {
   };
 }
 
+/** A win from your own turn requires an actual winning tile in hand: the
+ * tile you just drew (lastDraw is cleared by chi/pon, so a call never
+ * counts), or the heavenly-hand case -- the dealer's very first action of a
+ * round, before anything has been discarded or melded. Without this guard,
+ * ponning into a completed shape let players "self-draw win" on a turn
+ * where nothing was drawn -- an illegal win that also pocketed a phantom
+ * Self-Draw fan (enough to fake past a fan minimum). */
+function hasSelfWinTile(state: GameState, seat: number): boolean {
+  if (state.lastDraw?.seat === seat) return true;
+  return (
+    seat === state.dealerIndex &&
+    state.players.every((p) => p.discards.length === 0 && p.melds.length === 0)
+  );
+}
+
 function handleSelfDrawWin(state: GameState, seat: number): GameState {
   if (state.turn.phase !== "awaiting-discard" || seat !== state.turn.activeSeat) return state;
+  if (!hasSelfWinTile(state, seat)) return state;
   const player = state.players[seat];
   const decompositions = decomposeHand(player.concealedTiles, player.melds);
   const ctx = buildScoringContext(state, seat, {
@@ -301,7 +317,10 @@ function handleSelfDrawWin(state: GameState, seat: number): GameState {
   });
   if (!isValidWinDeclaration(decompositions, ctx)) return state;
   const score = bestScore(decompositions, ctx)!;
-  const wonTile = player.concealedTiles[player.concealedTiles.length - 1];
+  const wonTile =
+    state.lastDraw?.seat === seat
+      ? state.lastDraw.tile
+      : player.concealedTiles[player.concealedTiles.length - 1];
   const winResult: WinResult = {
     seat,
     decomposition: score.decomposition,
@@ -391,7 +410,9 @@ function applyChi(
 
   const meld: Meld = {
     type: "chi",
-    tiles: [t1, t2, discard],
+    // Rank order, so a called 3-4-5 always DISPLAYS as 3-4-5 regardless of
+    // which tile was the discard.
+    tiles: [t1, t2, discard].sort((a, b) => a.rank - b.rank),
     calledFromSeat: discardingSeat,
     calledTileId: discard.id,
   };
@@ -623,6 +644,7 @@ export function getLegalActions(state: GameState, seat: number): LegalAction[] {
       tileId: t.id,
     }));
     if (
+      hasSelfWinTile(state, seat) &&
       canDeclareWin(state, seat, null, {
         selfDraw: true,
         isReplacementWin: state.lastDrawWasReplacement,

@@ -89,7 +89,30 @@ export async function joinOnlineRoom(
   const playerId = getPlayerId();
   const alreadyIn = Boolean(room.players[playerId]);
   if (!alreadyIn) {
-    if (room.status !== "lobby") return { error: "in-progress" };
+    if (room.status !== "lobby") {
+      // Mid-game joins are only allowed into an ORPHANED human seat: one
+      // the round was dealt with a human in, whose player has since left
+      // (e.g. accidentally hit "Leave room" -- their seat is being
+      // bot-driven until someone reclaims it). Codes are shared among
+      // friends, so whoever holds the code may take the seat over.
+      const taken = new Set(Object.values(room.players).map((p) => p.seat));
+      const dealtHumans: number[] = room.round
+        ? (JSON.parse(room.round.initialStateJson) as { players: { seat: number; isBot: boolean }[] })
+            .players.filter((p) => !p.isBot)
+            .map((p) => p.seat)
+        : [];
+      const orphanSeat = dealtHumans.find((seat) => !taken.has(seat));
+      if (orphanSeat === undefined) return { error: "in-progress" };
+      await transport.setPlayer(code, {
+        id: playerId,
+        name: playerName,
+        icon,
+        seat: orphanSeat,
+        joinedAt: transport.now(),
+        lastSeen: transport.now(),
+      });
+      return { code };
+    }
     if (Object.keys(room.players).length >= 4) return { error: "full" };
     // Default to the lowest open seat; the lobby lets you move afterward.
     const taken = new Set(Object.values(room.players).map((p) => p.seat));
