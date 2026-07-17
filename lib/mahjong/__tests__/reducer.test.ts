@@ -215,7 +215,10 @@ describe("mahjongReducer turn loop", () => {
         ruleset: createRuleset(0),
       }),
       0,
-      { concealedTiles: hand }
+      // One off-seat flower: scores nothing itself, but suppresses the No
+      // Flowers bonus (which counts toward the minimum and would push this
+      // deliberately-cheap hand over the 3-fan bar).
+      { concealedTiles: hand, flowers: [{ id: "fx", suit: "flowers", rank: 2 }] }
     );
     expect(getLegalActions(zeroFanState, 0).some((a) => a.type === "DECLARE_WIN")).toBe(true);
 

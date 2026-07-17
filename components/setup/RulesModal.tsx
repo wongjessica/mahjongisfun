@@ -111,10 +111,9 @@ export function RulesModal() {
                   <p>
                     Flower #1 is Spring &amp; Plum, #2 Summer &amp; Orchid, #3 Autumn &amp;
                     Chrysanthemum, #4 Winter &amp; Bamboo. Only your own position&apos;s flower or
-                    season scores (+1 fan each, capped at 2), and winning with no flowers at
-                    all is worth +1. Flower fan (and the no-flower bonus) counts toward your
-                    payout but never toward the win minimum — the hand pattern itself must
-                    clear the table&apos;s 0/3/5 bar.
+                    season scores (+1 fan each, capped at 2) — an off-seat flower is worth
+                    nothing. Winning with no flowers at all is worth +1. Flower fan and the
+                    no-flower bonus count toward the win minimum like any other fan.
                   </p>
                 </Section>
 

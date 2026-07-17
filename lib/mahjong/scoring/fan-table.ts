@@ -184,13 +184,13 @@ const concealedHandPattern: FanPattern = (_sets, decomposition) => {
     : null;
 };
 
-// Flowers are pure luck (dealt/drawn, no skill or hand-shape involved), so
-// they're kept out of FAN_PATTERNS entirely and applied separately in
-// calculate.ts: capped, and excluded from the fan-minimum qualifying check
-// (a hand can never win on flowers alone). Only your OWN seat's flower/
-// season (rank === seatWind) counts -- an off-seat flower is worth nothing,
-// so at most 2 fan is achievable (your own flower tile + your own season
-// tile), which is what the cap reflects.
+// Applied separately in calculate.ts (alongside the No Flowers bonus)
+// rather than through FAN_PATTERNS, purely so the flower/no-flower pairing
+// lives in one place. Only your OWN seat's flower/season (rank === seatWind)
+// counts -- an off-seat flower is worth nothing, so at most 2 fan is
+// achievable (your own flower tile + your own season tile), which is what
+// the cap reflects. House rule: flower fan counts toward the win minimum
+// like any other fan.
 export const flowerBonusPattern: FanPattern = (_sets, _decomposition, ctx) => {
   const matching = ctx.flowers.filter((f) => f.rank === ctx.seatWind).length;
   if (matching === 0) return null;

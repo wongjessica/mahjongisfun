@@ -189,8 +189,8 @@ describe("scoring", () => {
     // minimum -- that's exactly the scenario the 0/3-fan toggle should gate.
     const decompositions = decomposeHand(twoFanHand(), []);
     const score = bestScore(decompositions, baseContext())!;
-    // Concealed Hand (1) + the non-qualifying No Flowers bonus (1).
-    expect(score.qualifyingFan).toBe(1);
+    // Concealed Hand (1) + No Flowers (1) -- both count toward the minimum.
+    expect(score.qualifyingFan).toBe(2);
     expect(score.fan).toBe(2);
 
     expect(isValidWinDeclaration(decompositions, baseContext({ ruleset: createRuleset(0) }))).toBe(
@@ -229,11 +229,10 @@ describe("scoring", () => {
     expect(offSeatResult.fan).toBe(1); // Concealed Hand only
   });
 
-  it("never lets flowers alone satisfy the fan minimum", () => {
-    // A hand worth nothing but the automatic Concealed Hand bonus (1 fan),
-    // plus two seat-matching bonus tiles (own flower + own season) that
-    // would reach the 3-fan minimum if flowers counted toward it -- they
-    // must not.
+  it("counts your own flowers toward the fan minimum (house rule)", () => {
+    // Concealed Hand (1) + two seat-matching bonus tiles (own flower + own
+    // season, 2) = 3 -- flowers definitely count toward the minimum, so
+    // this clears a 3-fan table.
     const decompositions = decomposeHand(twoFanHand(), []);
     const flowers: Tile[] = [
       { id: "f1", suit: "flowers", rank: 1 },
@@ -241,20 +240,25 @@ describe("scoring", () => {
     ];
     const ctx = baseContext({ seatWind: 1, flowers, ruleset: createRuleset(3) });
     const score = bestScore(decompositions, ctx)!;
-    // Total fan (capped) clears 3 (1 concealed + 2 capped flowers = 3)...
-    expect(score.fan).toBeGreaterThanOrEqual(3);
-    // ...but qualifying (non-flower) fan is only 1, so the win must be illegal.
-    expect(score.qualifyingFan).toBe(1);
-    expect(isValidWinDeclaration(decompositions, ctx)).toBe(false);
+    expect(score.qualifyingFan).toBe(3);
+    expect(isValidWinDeclaration(decompositions, ctx)).toBe(true);
+
+    // An off-seat flower scores nothing, so the same hand stays below 3.
+    const offSeatCtx = baseContext({
+      seatWind: 1,
+      flowers: [{ id: "f3", suit: "flowers", rank: 2 }],
+      ruleset: createRuleset(3),
+    });
+    expect(isValidWinDeclaration(decompositions, offSeatCtx)).toBe(false);
   });
 
-  it("awards a non-qualifying bonus fan for winning with no flowers at all", () => {
+  it("awards a bonus fan for winning with no flowers at all", () => {
     const decompositions = decomposeHand(twoFanHand(), []);
     // baseContext has flowers: [] -- the bare-handed case.
     const bare = bestScore(decompositions, baseContext())!;
     expect(bare.breakdown.map((b) => b.label)).toContain("No Flowers");
-    // Counts in the total but never toward the minimum.
-    expect(bare.fan).toBe(bare.qualifyingFan + 1);
+    // Counts toward the minimum like any other fan.
+    expect(bare.qualifyingFan).toBe(bare.fan);
 
     // Any flower at all (even an off-seat one worth nothing) kills it.
     const withFlower = bestScore(
