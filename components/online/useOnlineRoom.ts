@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameAction } from "@/lib/mahjong/actions";
 import { createInitialState } from "@/lib/mahjong/reducer";
-import { GameState } from "@/lib/mahjong/state";
+import { GameState, Wind } from "@/lib/mahjong/state";
 import {
   BOT_TAKEOVER_AFTER_MS,
   HEARTBEAT_INTERVAL_MS,
@@ -54,7 +54,7 @@ export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   anonymousDiscards: true,
 };
 
-export async function createOnlineRoom(playerName: string): Promise<string> {
+export async function createOnlineRoom(playerName: string, icon: string): Promise<string> {
   const transport = await getTransport();
   const code = generateRoomCode();
   const playerId = getPlayerId();
@@ -65,7 +65,7 @@ export async function createOnlineRoom(playerName: string): Promise<string> {
     status: "lobby",
     config: DEFAULT_ROOM_CONFIG,
     players: {
-      [playerId]: { id: playerId, name: playerName, seat: -1, joinedAt: now, lastSeen: now },
+      [playerId]: { id: playerId, name: playerName, icon, seat: -1, joinedAt: now, lastSeen: now },
     },
     botNames: {},
     round: null,
@@ -76,7 +76,11 @@ export async function createOnlineRoom(playerName: string): Promise<string> {
 
 export type JoinError = "not-found" | "full" | "in-progress";
 
-export async function joinOnlineRoom(codeInput: string, playerName: string): Promise<{ code: string } | { error: JoinError }> {
+export async function joinOnlineRoom(
+  codeInput: string,
+  playerName: string,
+  icon: string
+): Promise<{ code: string } | { error: JoinError }> {
   const transport = await getTransport();
   const code = normalizeRoomCode(codeInput);
   const room = await transport.fetchRoom(code);
@@ -89,6 +93,7 @@ export async function joinOnlineRoom(codeInput: string, playerName: string): Pro
     await transport.setPlayer(code, {
       id: playerId,
       name: playerName,
+      icon,
       seat: -1,
       joinedAt: transport.now(),
       lastSeen: transport.now(),
@@ -105,12 +110,18 @@ export interface OnlineRoomState {
   isActingHost: boolean;
   /** Seat -> name for every seat except mine (humans and bots alike). */
   seatNames: Record<number, string>;
+  /** Seat -> chosen avatar emoji, for every human who picked one. */
+  seatIcons: Record<number, string>;
   /** Replayed, authoritative game state (null until a round starts). */
   gameState: GameState | null;
   driveSeats: number[];
   dispatch: (action: GameAction) => void;
   startGame: (config: RoomConfig) => Promise<void>;
-  nextRound: (dealerIndex: number, startingScores: [number, number, number, number]) => Promise<void>;
+  nextRound: (
+    dealerIndex: number,
+    startingScores: [number, number, number, number],
+    roundWind: Wind
+  ) => Promise<void>;
   setConfig: (config: RoomConfig) => Promise<void>;
   leave: () => Promise<void>;
   now: number;
@@ -170,6 +181,18 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     }
     return names;
   }, [room, playerId]);
+
+  // Unlike seatNames, this includes the local player's own seat -- your
+  // avatar is yours everywhere, not just on other people's screens.
+  const seatIcons = useMemo(() => {
+    const icons: Record<number, string> = {};
+    if (room) {
+      for (const player of Object.values(room.players)) {
+        if (player.seat >= 0 && player.icon) icons[player.seat] = player.icon;
+      }
+    }
+    return icons;
+  }, [room]);
 
   // The acting host's bot AI drives: real bot seats, plus any human seat
   // whose player has been unreachable longer than the takeover grace period.
@@ -241,7 +264,11 @@ export function useOnlineRoom(code: string): OnlineRoomState {
   );
 
   const nextRound = useCallback(
-    async (dealerIndex: number, startingScores: [number, number, number, number]) => {
+    async (
+      dealerIndex: number,
+      startingScores: [number, number, number, number],
+      roundWind: Wind
+    ) => {
       const transport = await getTransport();
       const current = roomRef.current;
       if (!current?.round) return;
@@ -253,6 +280,7 @@ export function useOnlineRoom(code: string): OnlineRoomState {
         seed: Date.now(),
         humanSeats,
         dealerIndex,
+        roundWind,
         startingScores,
       });
       await transport.setRound(current.code, {
@@ -279,6 +307,7 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     mySeat,
     isActingHost,
     seatNames,
+    seatIcons,
     gameState,
     driveSeats,
     dispatch,

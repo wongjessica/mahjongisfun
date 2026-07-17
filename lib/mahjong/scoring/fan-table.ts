@@ -87,6 +87,24 @@ const allHonorsPattern: FanPattern = (sets, decomposition) => {
   return null;
 };
 
+// All Terminals (every set built purely from 1s and 9s) is a limit hand;
+// Terminals & Honors (every set is terminal OR honor, with at least one
+// honor) is one step down. One branching function, so the two can never
+// double-count each other. Both stack with All Triplets, which such hands
+// structurally always are -- a sequence can never be all-terminal (1-2-3
+// contains a 2), which the explicit sequence check below encodes, since
+// unify() records a sequence only by its lowest rank.
+const terminalHandsPattern: FanPattern = (sets, decomposition, ctx) => {
+  if (decomposition.kind === "thirteenOrphans") return null;
+  if (sets.some((s) => s.kind === "sequence")) return null;
+  const isTerminalSet = (s: UnifiedSet) => isSuitType(s.suit) && (s.rank === 1 || s.rank === 9);
+  const isHonorSet = (s: UnifiedSet) => !isSuitType(s.suit);
+  if (!sets.every((s) => isTerminalSet(s) || isHonorSet(s))) return null;
+  return sets.every(isTerminalSet)
+    ? { label: "All Terminals", fan: ctx.ruleset.limitFan }
+    : { label: "Terminals & Honors", fan: 8 };
+};
+
 const sevenPairsPattern: FanPattern = (_sets, decomposition) =>
   decomposition.kind === "sevenPairs" ? { label: "Seven Pairs", fan: 4 } : null;
 
@@ -170,6 +188,7 @@ export const FAN_PATTERNS: FanPattern[] = [
   allTripletsPattern,
   allSequencesPattern,
   allHonorsPattern,
+  terminalHandsPattern,
   dragonPattern,
   fourWindsPattern,
   seatRoundWindPattern,

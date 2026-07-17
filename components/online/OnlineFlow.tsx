@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { GameBoard } from "@/components/board/GameBoard";
 import { GameContextProvider } from "@/components/game/GameContext";
+import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
 import { normalizeRoomCode } from "@/lib/multiplayer/protocol";
 import { Lobby } from "./Lobby";
 import {
@@ -40,11 +41,13 @@ function OnlineHome({
 }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState(initialCode);
+  const [icon, setIcon] = useState("🙂");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setName(getSavedPlayerName());
+    setIcon(getSavedIcon());
   }, []);
 
   const trimmedName = name.trim();
@@ -55,7 +58,8 @@ function OnlineHome({
     setError(null);
     try {
       savePlayerName(trimmedName);
-      onEnterRoom(await createOnlineRoom(trimmedName));
+      saveIcon(icon);
+      onEnterRoom(await createOnlineRoom(trimmedName, icon));
     } catch {
       setError("Couldn't create the room. Check your connection and try again.");
       setBusy(false);
@@ -68,7 +72,8 @@ function OnlineHome({
     setError(null);
     try {
       savePlayerName(trimmedName);
-      const result = await joinOnlineRoom(code, trimmedName);
+      saveIcon(icon);
+      const result = await joinOnlineRoom(code, trimmedName, icon);
       if ("error" in result) {
         setError(JOIN_ERROR_TEXT[result.error]);
         setBusy(false);
@@ -105,6 +110,8 @@ function OnlineHome({
           className="mt-2 w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-300 focus:border-emerald-400"
         />
       </label>
+
+      <IconPicker value={icon} onChange={setIcon} />
 
       <motion.button
         type="button"
@@ -155,7 +162,7 @@ function OnlineHome({
  * running off the shared action log. */
 function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
   const online = useOnlineRoom(code);
-  const { room, roomExists, mySeat, gameState, dispatch, driveSeats, seatNames, isActingHost } = online;
+  const { room, roomExists, mySeat, gameState, dispatch, driveSeats, seatNames, seatIcons, isActingHost } = online;
 
   const leaveAndExit = async () => {
     await online.leave();
@@ -229,13 +236,16 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
           anonymousDiscards: room.config.anonymousDiscards,
           speed: room.config.speed,
           botNames: seatNames,
+          icons: seatIcons,
           driveSeats,
           canAdvanceRound: isActingHost,
           isOnline: true,
         }}
       >
         <GameBoard
-          onNextRound={(dealerIndex, scores) => void online.nextRound(dealerIndex, scores)}
+          onNextRound={(dealerIndex, scores, roundWind) =>
+            void online.nextRound(dealerIndex, scores, roundWind)
+          }
           onNewMatch={() => void leaveAndExit()}
           diceSeed={diceSeed}
         />

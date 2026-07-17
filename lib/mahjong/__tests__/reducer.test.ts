@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getLegalActions, mahjongReducer } from "../reducer";
+import { getLegalActions, mahjongReducer, nextRoundTransition } from "../reducer";
 import { createRuleset } from "../scoring/ruleset";
 import { GameState, PlayerState, Wind } from "../state";
 import { t } from "../fixtures/hands";
@@ -215,5 +215,30 @@ describe("mahjongReducer turn loop", () => {
 
     const threeFanState = { ...zeroFanState, ruleset: createRuleset(3) };
     expect(getLegalActions(threeFanState, 0).some((a) => a.type === "DECLARE_WIN")).toBe(false);
+  });
+
+  it("advances the table wind only after every seat has been dealer", () => {
+    const win = (seat: number) =>
+      [{ seat, decomposition: { kind: "standard", concealedGroups: [], melds: [] }, fan: 3, selfDraw: false, wonTile: t("dots", 1), fromSeat: null, breakdown: [], revealedHand: { concealedTiles: [], melds: [] } }] as GameState["winners"];
+
+    // Dealer wins -> dealer repeats, wind unchanged.
+    const dealerWon = makeTestState({ dealerIndex: 2, roundWind: 1, winners: win(2) });
+    expect(nextRoundTransition(dealerWon)).toEqual({ dealerIndex: 2, roundWind: 1 });
+
+    // Draw -> dealer repeats, wind unchanged.
+    const drawn = makeTestState({ dealerIndex: 3, roundWind: 1, isDraw: true });
+    expect(nextRoundTransition(drawn)).toEqual({ dealerIndex: 3, roundWind: 1 });
+
+    // Non-dealer wins mid-cycle -> dealership passes, wind unchanged.
+    const midCycle = makeTestState({ dealerIndex: 1, roundWind: 2, winners: win(3) });
+    expect(nextRoundTransition(midCycle)).toEqual({ dealerIndex: 2, roundWind: 2 });
+
+    // Non-dealer wins while seat 3 deals -> cycle complete, wind advances.
+    const cycleEnd = makeTestState({ dealerIndex: 3, roundWind: 1, winners: win(0) });
+    expect(nextRoundTransition(cycleEnd)).toEqual({ dealerIndex: 0, roundWind: 2 });
+
+    // North round wraps back to East.
+    const northEnd = makeTestState({ dealerIndex: 3, roundWind: 4, winners: win(1) });
+    expect(nextRoundTransition(northEnd)).toEqual({ dealerIndex: 0, roundWind: 1 });
   });
 });

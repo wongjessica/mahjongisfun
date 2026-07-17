@@ -7,11 +7,11 @@ import { assignBotNames } from "@/components/game/botNames";
 import { OnlineFlow } from "@/components/online/OnlineFlow";
 import { SetupConfig, SetupForm } from "@/components/setup/SetupForm";
 import { createInitialState } from "@/lib/mahjong/reducer";
-import { GameState } from "@/lib/mahjong/state";
+import { GameState, Wind } from "@/lib/mahjong/state";
 
 const HUMAN_SEAT = 0;
 
-type MatchConfig = Pick<SetupConfig, "fanMinimum" | "anonymousDiscards" | "speed">;
+type MatchConfig = Pick<SetupConfig, "fanMinimum" | "anonymousDiscards" | "speed" | "icon">;
 
 export default function Home() {
   const [initialState, setInitialState] = useState<GameState | null>(null);
@@ -40,15 +40,20 @@ export default function Home() {
       fanMinimum: config.fanMinimum,
       anonymousDiscards: config.anonymousDiscards,
       speed: config.speed,
+      icon: config.icon,
     });
     setBotNames(assignBotNames(HUMAN_SEAT));
     setGameKey((key) => key + 1);
   };
 
-  // Continues the same match: same ruleset/settings, but the dealer and
-  // scores carry forward per the outcome of the round that just ended
-  // (computed by GameBoard, which has the ended state).
-  const startNextRound = (nextDealerIndex: number, startingScores: [number, number, number, number]) => {
+  // Continues the same match: same ruleset/settings, but the dealer, table
+  // wind, and scores carry forward per the outcome of the round that just
+  // ended (computed by GameBoard, which has the ended state).
+  const startNextRound = (
+    nextDealerIndex: number,
+    startingScores: [number, number, number, number],
+    nextRoundWind: Wind
+  ) => {
     if (!matchConfig) return;
     setInitialState(
       createInitialState({
@@ -56,6 +61,7 @@ export default function Home() {
         seed: Date.now(),
         humanSeat: HUMAN_SEAT,
         dealerIndex: nextDealerIndex,
+        roundWind: nextRoundWind,
         startingScores,
       })
     );
@@ -83,6 +89,7 @@ export default function Home() {
         anonymousDiscards={matchConfig.anonymousDiscards}
         speed={matchConfig.speed}
         botNames={botNames}
+        icons={{ [HUMAN_SEAT]: matchConfig.icon }}
       >
         <GameBoard onNextRound={startNextRound} onNewMatch={() => setInitialState(null)} />
       </GameProvider>

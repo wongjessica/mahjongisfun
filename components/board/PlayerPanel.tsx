@@ -117,7 +117,7 @@ export function PlayerPanel({
   handSize = "md",
   position,
 }: PlayerPanelProps) {
-  const { state, speed, botNames } = useGame();
+  const { state, speed, botNames, icons } = useGame();
   const player = state.players[seat];
   const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
   const isDealer = state.dealerIndex === seat;
@@ -152,7 +152,10 @@ export function PlayerPanel({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Avatar seatWind={player.seatWind} label={isHuman ? "🙂" : botNames[seat][0]} />
+          <Avatar
+            seatWind={player.seatWind}
+            label={icons[seat] ?? (isHuman ? "🙂" : botNames[seat]?.[0] ?? "?")}
+          />
           <div className="leading-tight">
             <div className="flex items-center gap-1 text-sm font-semibold text-slate-800">
               {isHuman ? "You" : botNames[seat]}

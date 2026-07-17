@@ -18,6 +18,9 @@ interface GameContextValue {
    * plus bot names -- same lookup either way, so seat-labelling UI never
    * cares which kind of opponent it's naming. */
   botNames: Record<number, string>;
+  /** Seat -> chosen avatar emoji, for every seat occupied by a human who
+   * picked one (bots keep their letter avatars). */
+  icons: Record<number, string>;
   /** Seats THIS CLIENT'S bot AI is responsible for driving. Solo: every bot
    * seat. Online: empty for everyone except the acting host, who drives the
    * real bots plus any seat whose human has been gone past the takeover
@@ -51,6 +54,7 @@ export function GameProvider({
   anonymousDiscards,
   speed,
   botNames,
+  icons = {},
   children,
 }: {
   initialState: GameState;
@@ -58,6 +62,7 @@ export function GameProvider({
   anonymousDiscards: boolean;
   speed: GameSpeed;
   botNames: Record<number, string>;
+  icons?: Record<number, string>;
   children: ReactNode;
 }) {
   const [state, dispatch] = useReducer(mahjongReducer, initialState);
@@ -75,6 +80,7 @@ export function GameProvider({
         anonymousDiscards,
         speed,
         botNames,
+        icons,
         driveSeats,
         canAdvanceRound: true,
         isOnline: false,

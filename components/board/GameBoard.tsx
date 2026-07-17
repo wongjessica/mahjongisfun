@@ -7,7 +7,8 @@ import { useBotDriver } from "@/components/game/useBotDriver";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
 import { toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
-import { nextSeat } from "@/lib/mahjong/state";
+import { Wind, nextSeat } from "@/lib/mahjong/state";
+import { addEarnings, earningsForRound } from "@/lib/wallet";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
 import { fireWinConfetti } from "./confetti";
@@ -20,7 +21,11 @@ interface GameBoardProps {
   /** Continues the match: same ruleset/settings, dealer and scores carry
    * forward per the rotation rule (computed in RoundEndOverlay, which has
    * the ended round's state). */
-  onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number]) => void;
+  onNextRound: (
+    nextDealerIndex: number,
+    startingScores: [number, number, number, number],
+    nextRoundWind: Wind
+  ) => void;
   /** Full reset: back to the setup screen, dealer/scores start fresh.
    * (Online: leaves the room.) */
   onNewMatch: () => void;
@@ -36,7 +41,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
   const [rollingDice, setRollingDice] = useState(true);
   const thinkingSeat = useBotDriver(rollingDice);
   useHumanAutoDraw(rollingDice);
-  const { state, dispatch, humanSeat } = useGame();
+  const { state, dispatch, humanSeat, isOnline } = useGame();
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   // Closing the round-end overlay just hides it -- the round is still over
   // (Next Round/New Match haven't happened) -- so the board can be inspected
@@ -55,13 +60,32 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
     fireWinConfetti();
   }, [rollingDice, state.turn.phase, state.winners, humanSeat]);
 
-  // Auto-select the tile you just drew -- discarding it (the common case)
-  // is then a single tap, instead of having to select it first.
+  // Credit the play-money wallet exactly once per finished round (same
+  // once-per-round ref discipline as the confetti). Solo and online play
+  // pay into separate balances.
+  const walletCreditedRef = useRef(false);
   useEffect(() => {
-    if (state.lastDraw && state.lastDraw.seat === humanSeat) {
-      setSelectedTileId(state.lastDraw.tile.id);
+    if (state.turn.phase !== "round-ended" || walletCreditedRef.current) return;
+    walletCreditedRef.current = true;
+    addEarnings(isOnline ? "online" : "solo", earningsForRound(state, humanSeat));
+  }, [state, humanSeat, isOnline]);
+
+  // Auto-select the tile you just drew -- discarding it (the common case)
+  // is then a single tap, instead of having to select it first. Guarded by
+  // the drawn tile's ID (not the lastDraw object), and fired at most once
+  // per distinct draw: in online play every remote action rebuilds state
+  // from the action log, so lastDraw gets a fresh object identity
+  // constantly -- re-running on identity would keep yanking the selection
+  // back to the drawn tile after the player deliberately picked another
+  // (the "I selected a tile, waited, and it discarded the wrong one" bug).
+  const drawnTileId = state.lastDraw?.seat === humanSeat ? state.lastDraw.tile.id : null;
+  const autoSelectedDrawRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (drawnTileId && drawnTileId !== autoSelectedDrawRef.current) {
+      autoSelectedDrawRef.current = drawnTileId;
+      setSelectedTileId(drawnTileId);
     }
-  }, [state.lastDraw, humanSeat]);
+  }, [drawnTileId]);
 
   const rightSeat = nextSeat(humanSeat);
   const topSeat = nextSeat(rightSeat);

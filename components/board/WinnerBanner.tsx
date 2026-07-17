@@ -4,8 +4,12 @@ import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { LabeledTile } from "@/components/tiles/LabeledTile";
 import { Meld } from "@/lib/mahjong/melds";
-import { WinResult, nextSeat } from "@/lib/mahjong/state";
+import { nextRoundTransition } from "@/lib/mahjong/reducer";
+import { Wind, WinResult, nextSeat } from "@/lib/mahjong/state";
 import { sortTiles } from "@/lib/mahjong/tiles";
+import { earningsForRound } from "@/lib/wallet";
+
+const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
 function MeldCluster({ meld }: { meld: Meld }) {
   return (
@@ -43,7 +47,11 @@ export function WinnerHand({ winner }: { winner: WinResult }) {
 }
 
 interface RoundEndOverlayProps {
-  onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number]) => void;
+  onNextRound: (
+    nextDealerIndex: number,
+    startingScores: [number, number, number, number],
+    nextRoundWind: Wind
+  ) => void;
   onNewMatch: () => void;
   /** Dismisses the overlay without advancing the round, so the board behind
    * it (all hands revealed, full discard piles) can be inspected as a
@@ -64,7 +72,8 @@ export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEnd
 
   const dealerRepeats =
     state.isDraw || (state.winners?.some((w) => w.seat === state.dealerIndex) ?? false);
-  const nextDealerIndex = dealerRepeats ? state.dealerIndex : nextSeat(state.dealerIndex);
+  const next = nextRoundTransition(state);
+  const windAdvances = next.roundWind !== state.roundWind;
   const startingScores = state.players.map((p) => p.score) as [number, number, number, number];
 
   return (
@@ -111,15 +120,24 @@ export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEnd
             ))}
           </div>
         )}
+        <p className="mt-2 text-sm font-bold text-emerald-700">
+          +${earningsForRound(state, humanSeat).toLocaleString()} added to your{" "}
+          {isOnline ? "online" : "solo"} balance
+        </p>
         <p className="mt-3 text-xs text-amber-700">
           {dealerRepeats
             ? `${winnerName(state.dealerIndex)} ${staysVerb(state.dealerIndex)} dealer next round.`
             : `Dealership passes to ${winnerName(nextSeat(state.dealerIndex))}.`}
+          {windAdvances && (
+            <span className="mt-1 block font-bold text-amber-900">
+              Every seat has dealt — the table wind turns to {WIND_NAMES[next.roundWind]}!
+            </span>
+          )}
         </p>
         <div className="mt-3 flex items-center justify-center gap-3">
           {canAdvanceRound ? (
             <button
-              onClick={() => onNextRound(nextDealerIndex, startingScores)}
+              onClick={() => onNextRound(next.dealerIndex, startingScores, next.roundWind)}
               className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.97]"
             >
               Next Round

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toGameAction } from "@/lib/mahjong/actions";
-import { intermediateStrategy } from "@/lib/mahjong/bot/intermediateStrategy";
+import { smartStrategy } from "@/lib/mahjong/bot/smartStrategy";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 import { GameState } from "@/lib/mahjong/state";
 import { useGame } from "./GameContext";
@@ -40,7 +40,7 @@ export function useBotDriver(paused = false): number | null {
 
     const legal = getLegalActions(state, pendingSeat);
     timeoutRef.current = setTimeout(() => {
-      const chosen = intermediateStrategy.chooseAction(state, pendingSeat, legal);
+      const chosen = smartStrategy.chooseAction(state, pendingSeat, legal);
       dispatch(toGameAction(chosen, pendingSeat));
     }, BOT_DELAY_MS[speed]);
 

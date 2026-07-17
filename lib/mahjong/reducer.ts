@@ -10,7 +10,7 @@ import {
 } from "./melds";
 import { bestScore, isValidWinDeclaration } from "./scoring/calculate";
 import { ScoringContext } from "./scoring/fan-table";
-import { createRuleset } from "./scoring/ruleset";
+import { FanMinimum, createRuleset } from "./scoring/ruleset";
 import {
   CallResponse,
   GameState,
@@ -33,7 +33,7 @@ import {
 import { RNG, createRng } from "./rng";
 
 export interface InitialStateConfig {
-  fanMinimum: 0 | 3;
+  fanMinimum: FanMinimum;
   humanSeat?: number;
   /** All seats controlled by human players -- takes precedence over
    * humanSeat when set. Solo play passes one seat (or just humanSeat);
@@ -41,10 +41,26 @@ export interface InitialStateConfig {
    * marked isBot so the bot driver knows what it owns. */
   humanSeats?: number[];
   dealerIndex?: number;
+  /** The table (round) wind, carried across rounds of a match -- starts at
+   * East and advances one wind each time every seat has had its turn as
+   * dealer (see nextRoundTransition). */
+  roundWind?: Wind;
   seed: number;
   /** Carries scores forward across rounds of the same match; defaults to
    * all zero for a fresh match. */
   startingScores?: [number, number, number, number];
+}
+
+/** Where dealership and the table wind go after a finished round: the
+ * dealer repeats on a win or a drawn wall; otherwise dealership passes to
+ * the next seat, and when it wraps past the last seat (everyone has been
+ * dealer under this wind) the table wind advances E->S->W->N (then cycles). */
+export function nextRoundTransition(state: GameState): { dealerIndex: number; roundWind: Wind } {
+  const dealerRepeats = state.isDraw || (state.winners?.some((w) => w.seat === state.dealerIndex) ?? false);
+  if (dealerRepeats) return { dealerIndex: state.dealerIndex, roundWind: state.roundWind };
+  const dealerIndex = nextSeat(state.dealerIndex);
+  const roundWind = state.dealerIndex === 3 ? (((state.roundWind % 4) + 1) as Wind) : state.roundWind;
+  return { dealerIndex, roundWind };
 }
 
 function resolvePlayerFlowers(
@@ -101,7 +117,7 @@ export function createInitialState(config: InitialStateConfig): GameState {
     players: players as GameState["players"],
     wall,
     dealerIndex,
-    roundWind: 1,
+    roundWind: config.roundWind ?? 1,
     turn: { phase: "awaiting-discard", activeSeat: dealerIndex },
     pendingCallWindow: null,
     ruleset: createRuleset(config.fanMinimum),

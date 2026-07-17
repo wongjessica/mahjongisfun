@@ -1,16 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TileFace } from "@/components/tiles/TileFace";
+import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
+import { FanMinimum } from "@/lib/mahjong/scoring/ruleset";
+import { getBalance } from "@/lib/wallet";
 
 export type GameSpeed = "fast" | "slow";
 
 export interface SetupConfig {
-  fanMinimum: 0 | 3;
+  fanMinimum: FanMinimum;
   seed: number;
   anonymousDiscards: boolean;
   speed: GameSpeed;
+  icon: string;
 }
 
 const DECORATIVE_TILES = [
@@ -69,9 +73,16 @@ export function SetupForm({
   onStart: (config: SetupConfig) => void;
   onPlayOnline?: () => void;
 }) {
-  const [fanMinimum, setFanMinimum] = useState<0 | 3>(3);
+  const [fanMinimum, setFanMinimum] = useState<FanMinimum>(3);
   const [anonymousDiscards, setAnonymousDiscards] = useState(false);
   const [speed, setSpeed] = useState<GameSpeed>("slow");
+  const [icon, setIcon] = useState("🙂");
+  const [wallet, setWallet] = useState<{ solo: number; online: number } | null>(null);
+  // localStorage isn't available during prerender -- load on mount.
+  useEffect(() => {
+    setIcon(getSavedIcon());
+    setWallet({ solo: getBalance("solo"), online: getBalance("online") });
+  }, []);
 
   return (
     <motion.div
@@ -96,25 +107,39 @@ export function SetupForm({
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900">Hong Kong Mahjong</h1>
         <p className="mt-1 text-sm text-slate-500">Solo play against 3 intermediate bots.</p>
+        {wallet && (
+          <div className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+              🤖 Solo ${wallet.solo.toLocaleString()}
+            </span>
+            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
+              👥 Online ${wallet.online.toLocaleString()}
+            </span>
+          </div>
+        )}
       </div>
+
+      <IconPicker
+        value={icon}
+        onChange={(next) => {
+          setIcon(next);
+          saveIcon(next);
+        }}
+      />
 
       <div>
         <span className="block text-sm font-medium text-slate-700">Win minimum</span>
         <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setFanMinimum(0)}
-            className={`${optionBase} ${fanMinimum === 0 ? optionActive : optionInactive}`}
-          >
-            0-fan minimum
-          </button>
-          <button
-            type="button"
-            onClick={() => setFanMinimum(3)}
-            className={`${optionBase} ${fanMinimum === 3 ? optionActive : optionInactive}`}
-          >
-            3-fan minimum
-          </button>
+          {([0, 3, 5] as const).map((min) => (
+            <button
+              key={min}
+              type="button"
+              onClick={() => setFanMinimum(min)}
+              className={`${optionBase} ${fanMinimum === min ? optionActive : optionInactive}`}
+            >
+              {min}-fan{min === 5 ? " 🔥" : ""}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -149,7 +174,7 @@ export function SetupForm({
         type="button"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => onStart({ fanMinimum, seed: Date.now(), anonymousDiscards, speed })}
+        onClick={() => onStart({ fanMinimum, seed: Date.now(), anonymousDiscards, speed, icon })}
         className="rounded-xl bg-emerald-700 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-800"
       >
         Start Game

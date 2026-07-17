@@ -1,6 +1,11 @@
+/** Selectable win minimums: 0 (chicken hands allowed), 3 (standard HK), or
+ * 5 (high-stakes -- only flushes, big triplet hands, and limit shapes
+ * reliably clear it). */
+export type FanMinimum = 0 | 3 | 5;
+
 export interface Ruleset {
   /** Minimum fan required to legally declare a win. */
-  fanMinimum: 0 | 3;
+  fanMinimum: FanMinimum;
   /** Fan total is capped at this value (standard "limit hand"). */
   limitFan: number;
   /** Fan awarded per flower/season tile that matches the holder's own seat
@@ -19,6 +24,6 @@ export const DEFAULT_RULESET: Ruleset = {
   flowerFanCap: 2,
 };
 
-export function createRuleset(fanMinimum: 0 | 3): Ruleset {
+export function createRuleset(fanMinimum: FanMinimum): Ruleset {
   return { ...DEFAULT_RULESET, fanMinimum };
 }

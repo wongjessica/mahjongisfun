@@ -1,6 +1,7 @@
 import { GameAction, toGameAction } from "../mahjong/actions";
 import { getLegalActions, mahjongReducer } from "../mahjong/reducer";
 import { GameState } from "../mahjong/state";
+import { FanMinimum } from "../mahjong/scoring/ruleset";
 
 /** How often each client stamps its presence, and how stale a stamp can get
  * before the player counts as disconnected. Takeover is deliberately much
@@ -11,7 +12,7 @@ export const DISCONNECT_AFTER_MS = 12_000;
 export const BOT_TAKEOVER_AFTER_MS = 30_000;
 
 export interface RoomConfig {
-  fanMinimum: 0 | 3;
+  fanMinimum: FanMinimum;
   speed: "fast" | "slow";
   anonymousDiscards: boolean;
 }
@@ -19,6 +20,8 @@ export interface RoomConfig {
 export interface RoomPlayer {
   id: string;
   name: string;
+  /** Chosen avatar emoji (optional for rooms created before icons existed). */
+  icon?: string;
   /** Seat is assigned at join time (join order), so it's stable from the
    * lobby through the whole match. */
   seat: number;

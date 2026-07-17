@@ -81,6 +81,7 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
                   }`}
                 />
                 <span className={`text-sm font-semibold ${player ? "text-slate-700" : "text-slate-400"}`}>
+                  {player?.icon && <span className="mr-1">{player.icon}</span>}
                   {player ? player.name : "Bot (auto-fills)"}
                   {player && !connected && <span className="text-slate-400"> · reconnecting…</span>}
                   {i === 0 && player && <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">HOST</span>}
@@ -95,22 +96,17 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
       <div>
         <span className="block text-sm font-medium text-slate-700">Win minimum</span>
         <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            disabled={!isActingHost}
-            onClick={() => updateConfig({ fanMinimum: 0 })}
-            className={`${optionBase} ${config.fanMinimum === 0 ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
-          >
-            0-fan minimum
-          </button>
-          <button
-            type="button"
-            disabled={!isActingHost}
-            onClick={() => updateConfig({ fanMinimum: 3 })}
-            className={`${optionBase} ${config.fanMinimum === 3 ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
-          >
-            3-fan minimum
-          </button>
+          {([0, 3, 5] as const).map((min) => (
+            <button
+              key={min}
+              type="button"
+              disabled={!isActingHost}
+              onClick={() => updateConfig({ fanMinimum: min })}
+              className={`${optionBase} ${config.fanMinimum === min ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              {min}-fan{min === 5 ? " 🔥" : ""}
+            </button>
+          ))}
         </div>
       </div>
 

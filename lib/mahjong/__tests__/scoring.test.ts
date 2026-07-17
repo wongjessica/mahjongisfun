@@ -128,6 +128,45 @@ describe("scoring", () => {
     expect(result.breakdown.map((b) => b.label)).toContain("Seven Pairs");
   });
 
+  it("scores All Terminals at the limit and Terminals & Honors at 8", () => {
+    const allTerminals = [
+      t("characters", 1), t("characters", 1), t("characters", 1),
+      t("characters", 9), t("characters", 9), t("characters", 9),
+      t("dots", 1), t("dots", 1), t("dots", 1),
+      t("bamboo", 9), t("bamboo", 9), t("bamboo", 9),
+      t("dots", 9), t("dots", 9),
+    ];
+    const ruleset = createRuleset(0);
+    const pure = bestScore(decomposeHand(allTerminals, []), baseContext({ ruleset }))!;
+    expect(pure.breakdown.map((b) => b.label)).toContain("All Terminals");
+    expect(pure.fan).toBe(ruleset.limitFan);
+
+    const mixed = [
+      t("characters", 1), t("characters", 1), t("characters", 1),
+      t("dots", 9), t("dots", 9), t("dots", 9),
+      t("winds", 1), t("winds", 1), t("winds", 1),
+      t("dragons", 2), t("dragons", 2), t("dragons", 2),
+      t("bamboo", 1), t("bamboo", 1),
+    ];
+    const mixedResult = bestScore(decomposeHand(mixed, []), baseContext({ ruleset }))!;
+    const labels = mixedResult.breakdown.map((b) => b.label);
+    expect(labels).toContain("Terminals & Honors");
+    expect(labels).not.toContain("All Terminals");
+
+    // A hand with a 1-2-3 sequence is NOT a terminal hand.
+    const withSequence = [
+      t("characters", 1), t("characters", 2), t("characters", 3),
+      t("characters", 9), t("characters", 9), t("characters", 9),
+      t("dots", 1), t("dots", 1), t("dots", 1),
+      t("bamboo", 9), t("bamboo", 9), t("bamboo", 9),
+      t("dots", 9), t("dots", 9),
+    ];
+    const seqResult = bestScore(decomposeHand(withSequence, []), baseContext({ ruleset }))!;
+    const seqLabels = seqResult.breakdown.map((b) => b.label);
+    expect(seqLabels).not.toContain("All Terminals");
+    expect(seqLabels).not.toContain("Terminals & Honors");
+  });
+
   it("scores thirteen orphans at the limit", () => {
     const decompositions = decomposeHand(thirteenOrphansHand(), []);
     const ruleset = createRuleset(0);
