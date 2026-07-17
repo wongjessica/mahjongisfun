@@ -197,7 +197,7 @@ export function TileFace({
         </div>
       ) : (
         <div
-          className="flex h-full w-full items-center justify-center rounded-[5px] p-[8%]"
+          className="relative flex h-full w-full items-center justify-center rounded-[5px] p-[8%]"
           style={{ background: "linear-gradient(160deg, #fffef8 0%, #f2efe2 100%)" }}
         >
           <Image
@@ -208,6 +208,16 @@ export function TileFace({
             draggable={false}
             className="h-full w-full object-contain"
           />
+          {/* The White Dragon's authentic art is just a blue frame (白板,
+              "white board"), which reads as an empty slot to players who
+              don't know the tile -- "my 14th tile is invisible." A faint 白
+              watermark makes it unmistakably a tile without overriding the
+              real art. */}
+          {tile && tile.suit === "dragons" && tile.rank === 3 && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] font-bold text-sky-700/45">
+              白
+            </span>
+          )}
         </div>
       )}
     </Wrapper>

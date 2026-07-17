@@ -126,7 +126,7 @@ const terminalHandsPattern: FanPattern = (sets, decomposition, ctx) => {
   if (!sets.every((s) => isTerminalSet(s) || isHonorSet(s))) return null;
   return sets.every(isTerminalSet)
     ? { label: "All Terminals", fan: ctx.ruleset.limitFan }
-    : { label: "Terminals & Honors", fan: 8 };
+    : { label: "Terminals & Honors", fan: 4 };
 };
 
 const sevenPairsPattern: FanPattern = (_sets, decomposition) =>

@@ -154,6 +154,7 @@ describe("scoring", () => {
     const labels = mixedResult.breakdown.map((b) => b.label);
     expect(labels).toContain("Terminals & Honors");
     expect(labels).not.toContain("All Terminals");
+    expect(mixedResult.breakdown.find((b) => b.label === "Terminals & Honors")!.fan).toBe(4);
 
     // A hand with a 1-2-3 sequence is NOT a terminal hand.
     const withSequence = [
