@@ -14,7 +14,7 @@ const WIND_LABELS = ["East", "South", "West", "North"];
  * filled by a human when the host starts becomes a bot -- which is exactly
  * the 2 humans + 2 bots / 3 + 1 / 4 + 0 rule with no extra choices to make. */
 export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: () => void }) {
-  const { room, isActingHost, now, startGame, setConfig } = online;
+  const { room, isActingHost, now, startGame, setConfig, mySeat, claimSeat } = online;
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -64,14 +64,21 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {[0, 1, 2, 3].map((i) => {
-          const player = ordered[i];
+        {[0, 1, 2, 3].map((seat) => {
+          // Earliest-joined claimant wins a contested seat, matching how
+          // startGame resolves it for real.
+          const player = ordered.find((p) => p.seat === seat);
           const connected = player ? isPlayerConnected(player, now) : false;
+          const isMine = mySeat === seat;
           return (
             <div
-              key={i}
+              key={seat}
               className={`flex items-center justify-between rounded-xl border-2 px-4 py-2.5 ${
-                player ? "border-slate-200" : "border-dashed border-slate-200"
+                isMine
+                  ? "border-emerald-400 bg-emerald-50/50"
+                  : player
+                    ? "border-slate-200"
+                    : "border-dashed border-slate-200"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -84,10 +91,24 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
                   {player?.icon && <span className="mr-1">{player.icon}</span>}
                   {player ? player.name : "Bot (auto-fills)"}
                   {player && !connected && <span className="text-slate-400"> · reconnecting…</span>}
-                  {i === 0 && player && <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">HOST</span>}
+                  {seat === 0 && (
+                    <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
+                      DEALS FIRST
+                    </span>
+                  )}
                 </span>
               </span>
-              <span className="text-[10px] font-bold uppercase text-slate-400">{WIND_LABELS[i]}</span>
+              <span className="flex items-center gap-2">
+                {!player && !isMine && (
+                  <button
+                    onClick={() => void claimSeat(seat)}
+                    className="rounded-lg border border-emerald-500 px-2 py-0.5 text-[11px] font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
+                  >
+                    Sit here
+                  </button>
+                )}
+                <span className="text-[10px] font-bold uppercase text-slate-400">{WIND_LABELS[seat]}</span>
+              </span>
             </div>
           );
         })}

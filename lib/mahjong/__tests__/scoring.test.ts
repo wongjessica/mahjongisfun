@@ -22,6 +22,7 @@ function baseContext(overrides: Partial<ScoringContext> = {}): ScoringContext {
     selfDraw: false,
     isReplacementWin: false,
     isRobbingKong: false,
+    isLastTile: false,
     seatWind: 2,
     roundWind: 1,
     flowers: [],
@@ -242,6 +243,14 @@ describe("scoring", () => {
     // ...but qualifying (non-flower) fan is only 1, so the win must be illegal.
     expect(score.qualifyingFan).toBe(1);
     expect(isValidWinDeclaration(decompositions, ctx)).toBe(false);
+  });
+
+  it("awards one bonus fan for a last-tile win", () => {
+    const decompositions = decomposeHand(twoFanHand(), []);
+    const normal = bestScore(decompositions, baseContext())!;
+    const lastTile = bestScore(decompositions, baseContext({ isLastTile: true }))!;
+    expect(lastTile.breakdown.map((b) => b.label)).toContain("Last Tile");
+    expect(lastTile.fan).toBe(normal.fan + 1);
   });
 
   it("does not award fan for a kong itself, but does for a replacement-draw self-draw win", () => {

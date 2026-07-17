@@ -120,10 +120,29 @@ export function RoundEndOverlay({ onNextRound, onNewMatch, onDismiss }: RoundEnd
             ))}
           </div>
         )}
-        <p className="mt-2 text-sm font-bold text-emerald-700">
-          +${earningsForRound(state, humanSeat).toLocaleString()} added to your{" "}
-          {isOnline ? "online" : "solo"} balance
-        </p>
+        {(() => {
+          const amount = earningsForRound(state, humanSeat);
+          const balanceName = isOnline ? "online" : "solo";
+          if (amount > 0) {
+            return (
+              <p className="mt-2 text-sm font-bold text-emerald-700">
+                +${amount.toLocaleString()} added to your {balanceName} balance
+              </p>
+            );
+          }
+          if (amount < 0) {
+            return (
+              <p className="mt-2 text-sm font-bold text-rose-600">
+                −${Math.abs(amount).toLocaleString()} paid from your {balanceName} balance
+              </p>
+            );
+          }
+          return (
+            <p className="mt-2 text-xs font-medium text-amber-700/70">
+              No money changes hands for you this round.
+            </p>
+          );
+        })()}
         <p className="mt-3 text-xs text-amber-700">
           {dealerRepeats
             ? `${winnerName(state.dealerIndex)} ${staysVerb(state.dealerIndex)} dealer next round.`

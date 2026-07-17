@@ -206,6 +206,9 @@ describe("mahjongReducer turn loop", () => {
       makeTestState({
         turn: { phase: "awaiting-discard", activeSeat: 0 },
         dealerIndex: 1, // seat 0 must not be dealer, or the Dealer bonus would push this to 3 fan
+        // Mid-game wall: an empty wall would add the Last Tile bonus fan
+        // and defeat the point of a below-minimum hand.
+        wall: { liveTiles: [t("dots", 5)], deadWall: [] },
         ruleset: createRuleset(0),
       }),
       0,

@@ -30,13 +30,30 @@ export function addEarnings(kind: WalletKind, amount: number): number {
   return next;
 }
 
-/** What a finished round pays the human at `seat`: everyone gets a small
- * participation payout for seeing a round through, and a win pays out
- * proportionally to how big the hand was. Pure function of the ended
- * state, so the credit (GameBoard) and the display (RoundEndOverlay)
- * can never disagree. */
+/** Dollars per fan -- a 5-fan hand moves $50 per paying player. */
+const DOLLARS_PER_FAN = 10;
+
+/** What a finished round actually moves for the player at `seat`, per the
+ * traditional HK settlement (this deliberately mirrors the engine's own
+ * score settlement, at $10 per fan):
+ *
+ *   - Self-draw: EVERYONE pays the winner (fan x $10 each, so the winner
+ *     collects 3x that).
+ *   - Win off a discard: only the seat that fed the winning tile pays.
+ *   - Nobody else gains or loses a cent -- and yes, balances go negative.
+ *
+ * Pure function of the ended state, so the credit (GameBoard) and the
+ * display (RoundEndOverlay) can never disagree. */
 export function earningsForRound(state: GameState, seat: number): number {
-  const PARTICIPATION = 10;
-  const win = state.winners?.find((w) => w.seat === seat);
-  return PARTICIPATION + (win ? win.fan * 25 : 0);
+  let fanDelta = 0;
+  for (const win of state.winners ?? []) {
+    if (win.seat === seat) {
+      fanDelta += win.selfDraw ? win.fan * 3 : win.fan;
+    } else if (win.selfDraw) {
+      fanDelta -= win.fan;
+    } else if (win.fromSeat === seat) {
+      fanDelta -= win.fan;
+    }
+  }
+  return fanDelta * DOLLARS_PER_FAN;
 }

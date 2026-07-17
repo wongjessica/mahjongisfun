@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TileFace } from "@/components/tiles/TileFace";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
+import { RulesModal } from "@/components/setup/RulesModal";
 import { FanMinimum } from "@/lib/mahjong/scoring/ruleset";
 import { getBalance } from "@/lib/wallet";
 
@@ -89,8 +90,9 @@ export function SetupForm({
       initial={{ opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 26 }}
-      className="mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
+      className="relative mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
     >
+      <RulesModal />
       <div className="flex justify-center gap-1.5">
         {DECORATIVE_TILES.map((tile, i) => (
           <motion.div

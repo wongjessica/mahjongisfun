@@ -145,6 +145,9 @@ function buildScoringContext(
     selfDraw: opts.selfDraw,
     isReplacementWin: opts.isReplacementWin,
     isRobbingKong: opts.isRobbingKong,
+    // Winning on (or off a discard of) the very last live tile is worth a
+    // bonus fan -- at scoring time the wall is empty in exactly those cases.
+    isLastTile: state.wall.liveTiles.length === 0,
     seatWind: player.seatWind,
     roundWind: state.roundWind,
     flowers: player.flowers,

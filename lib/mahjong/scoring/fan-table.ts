@@ -8,6 +8,10 @@ export interface ScoringContext {
   selfDraw: boolean;
   isReplacementWin: boolean;
   isRobbingKong: boolean;
+  /** True when the live wall was empty at the moment of winning: a
+   * last-tile self-draw, or a win off the discard made after the final
+   * draw. Either way it's the round's last possible win. */
+  isLastTile: boolean;
   seatWind: Wind;
   roundWind: Wind;
   flowers: Tile[];
@@ -180,6 +184,9 @@ const robbingKongPattern: FanPattern = (_sets, _decomposition, ctx) =>
 const replacementWinPattern: FanPattern = (_sets, _decomposition, ctx) =>
   ctx.isReplacementWin ? { label: "Kong Replacement Win", fan: 1 } : null;
 
+const lastTilePattern: FanPattern = (_sets, _decomposition, ctx) =>
+  ctx.isLastTile ? { label: "Last Tile", fan: 1 } : null;
+
 // flowerBonusPattern is deliberately NOT included here -- see its own comment.
 export const FAN_PATTERNS: FanPattern[] = [
   thirteenOrphansPattern,
@@ -196,4 +203,5 @@ export const FAN_PATTERNS: FanPattern[] = [
   concealedHandPattern,
   robbingKongPattern,
   replacementWinPattern,
+  lastTilePattern,
 ];

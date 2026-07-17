@@ -65,7 +65,8 @@ export async function createOnlineRoom(playerName: string, icon: string): Promis
     status: "lobby",
     config: DEFAULT_ROOM_CONFIG,
     players: {
-      [playerId]: { id: playerId, name: playerName, icon, seat: -1, joinedAt: now, lastSeen: now },
+      // Creator starts at East (seat 0) but can move in the lobby.
+      [playerId]: { id: playerId, name: playerName, icon, seat: 0, joinedAt: now, lastSeen: now },
     },
     botNames: {},
     round: null,
@@ -90,11 +91,14 @@ export async function joinOnlineRoom(
   if (!alreadyIn) {
     if (room.status !== "lobby") return { error: "in-progress" };
     if (Object.keys(room.players).length >= 4) return { error: "full" };
+    // Default to the lowest open seat; the lobby lets you move afterward.
+    const taken = new Set(Object.values(room.players).map((p) => p.seat));
+    const seat = [0, 1, 2, 3].find((s) => !taken.has(s)) ?? -1;
     await transport.setPlayer(code, {
       id: playerId,
       name: playerName,
       icon,
-      seat: -1,
+      seat,
       joinedAt: transport.now(),
       lastSeen: transport.now(),
     });
@@ -117,6 +121,7 @@ export interface OnlineRoomState {
   driveSeats: number[];
   dispatch: (action: GameAction) => void;
   startGame: (config: RoomConfig) => Promise<void>;
+  claimSeat: (seat: number) => Promise<void>;
   nextRound: (
     dealerIndex: number,
     startingScores: [number, number, number, number],
@@ -240,13 +245,25 @@ export function useOnlineRoom(code: string): OnlineRoomState {
       const transport = await getTransport();
       const current = roomRef.current;
       if (!current) return;
-      // Seats by join order: host (earliest join) is seat 0 = East = first
-      // dealer. Remaining seats become bots.
+      // Seats were chosen in the lobby. Resolve any same-instant claim
+      // collisions deterministically (earliest-joined keeps the seat) and
+      // drop anyone unseated into the lowest open seat. Every seat left
+      // over becomes a bot. East (seat 0) deals first whether it's a human
+      // or a bot.
       const ordered = playersInJoinOrder(current).filter((p) => isPlayerConnected(p, transport.now()));
-      const humanSeats: number[] = [];
-      for (let i = 0; i < ordered.length && i < 4; i++) {
-        humanSeats.push(i);
-        await transport.setPlayer(current.code, { ...ordered[i], seat: i });
+      const takenSeats = new Set<number>();
+      const resolved: { player: (typeof ordered)[number]; seat: number }[] = [];
+      for (const player of ordered.slice(0, 4)) {
+        let seat = player.seat;
+        if (seat < 0 || seat > 3 || takenSeats.has(seat)) {
+          seat = [0, 1, 2, 3].find((s) => !takenSeats.has(s))!;
+        }
+        takenSeats.add(seat);
+        resolved.push({ player, seat });
+      }
+      const humanSeats = resolved.map((r) => r.seat);
+      for (const { player, seat } of resolved) {
+        if (player.seat !== seat) await transport.setPlayer(current.code, { ...player, seat });
       }
       const botSeats = [0, 1, 2, 3].filter((seat) => !humanSeats.includes(seat));
       await transport.setBotNames(current.code, assignNamesForSeats(botSeats));
@@ -296,6 +313,23 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     if (roomRef.current) await transport.setConfig(roomRef.current.code, config);
   }, []);
 
+  /** Move to a different seat while in the lobby. Checked against the
+   * latest snapshot; a same-instant race between two claimers is resolved
+   * for good at startGame (earliest-joined keeps the seat). */
+  const claimSeat = useCallback(
+    async (seat: number) => {
+      const current = roomRef.current;
+      if (!current || current.status !== "lobby") return;
+      const me = current.players[playerId];
+      if (!me || me.seat === seat) return;
+      const occupied = Object.values(current.players).some((p) => p.id !== playerId && p.seat === seat);
+      if (occupied) return;
+      const transport = await getTransport();
+      await transport.setPlayer(current.code, { ...me, seat });
+    },
+    [playerId]
+  );
+
   const leave = useCallback(async () => {
     const transport = await getTransport();
     await transport.removePlayer(code, playerId);
@@ -312,6 +346,7 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     driveSeats,
     dispatch,
     startGame,
+    claimSeat,
     nextRound,
     setConfig,
     leave,
