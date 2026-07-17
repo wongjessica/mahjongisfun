@@ -96,7 +96,6 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
   // page out from under you mid-thought. Forced auto-draw/flower-replace
   // (the only-one-legal-action case) doesn't count as "your turn" -- that
   // resolves itself with no input needed.
-  const actionBarRef = useRef<HTMLDivElement>(null);
   const wasActingRef = useRef(false);
   useEffect(() => {
     if (rollingDice) {
@@ -108,7 +107,19 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
       legal.length > 0 &&
       !(legal.length === 1 && (legal[0].type === "DRAW" || legal[0].type === "REPLACE_FLOWER"));
     if (isActionable && !wasActingRef.current) {
-      actionBarRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      // Scroll the whole page to its bottom, not scrollIntoView on the
+      // action bar element: right after a draw, the hand's "Drawn" tile
+      // slot and the action bar's buttons are still settling into their
+      // final layout (framer-motion `layout` reflows over a couple of
+      // frames), so a scrollIntoView measured too early undershoots and
+      // stops at the hand instead of the action bar below it. Re-reading
+      // scrollHeight live across a couple of animation frames (plus a
+      // short delayed catch-up) keeps the scroll target fresh as the
+      // layout finishes growing.
+      const scrollToBottom = () =>
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      requestAnimationFrame(() => requestAnimationFrame(scrollToBottom));
+      setTimeout(scrollToBottom, 250);
     }
     wasActingRef.current = isActionable;
   }, [state, humanSeat, rollingDice]);
@@ -176,9 +187,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
         handSize="md"
       />
 
-      <div ref={actionBarRef}>
-        <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
-      </div>
+      <ActionBar selectedTileId={selectedTileId} onConsumeSelection={() => setSelectedTileId(null)} />
 
       <AnimatePresence>
         {rollingDice && <DiceRoll onDone={() => setRollingDice(false)} seed={diceSeed} />}
