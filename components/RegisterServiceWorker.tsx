@@ -9,6 +9,12 @@ import { useEffect } from "react";
  * browser reloading a backgrounded tab with no signal. */
 export function RegisterServiceWorker() {
   useEffect(() => {
+    // Ask the browser to mark this origin's storage as persistent, so the
+    // play-money wallet (localStorage) isn't silently evicted under
+    // storage pressure or Safari/iOS's inactivity cleanup. Best-effort:
+    // browsers may decline, and there's no fallback short of accounts.
+    navigator.storage?.persist?.().catch(() => {});
+
     if (!("serviceWorker" in navigator)) return;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
     navigator.serviceWorker.register(`${basePath}/sw.js`).catch(() => {

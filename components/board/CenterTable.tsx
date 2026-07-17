@@ -1,46 +1,71 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
+import { getBalance } from "@/lib/wallet";
 
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "北" };
 
+/** Compact status bar between the discard log and your hand: table wind,
+ * tiles left, fan minimum, your money, and the latest discard. Placed there
+ * (not up with the opponents) so it stays on-screen on mobile, where you
+ * live at the bottom of the page staring at your own tiles. */
 export function CenterTable() {
-  const { state, humanSeat, botNames, anonymousDiscards } = useGame();
+  const { state, humanSeat, botNames, anonymousDiscards, isOnline } = useGame();
   const { lastDiscard } = state;
 
+  // localStorage read deferred to an effect (no storage access during
+  // render); refreshed on every state change so the round-end credit shows
+  // up as soon as it lands.
+  const [balance, setBalance] = useState<number | null>(null);
+  useEffect(() => {
+    setBalance(getBalance(isOnline ? "online" : "solo"));
+  }, [state, isOnline]);
+
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-3 shadow-inner">
-      <div className="flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-950/30 px-3 py-1">
-        <span className="text-lg font-bold leading-none text-amber-300">{WIND_GLYPH[state.roundWind]}</span>
-        <span className="text-xs font-bold uppercase tracking-wide text-amber-200">
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-1.5 shadow-inner">
+      <span className="flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-950/30 px-2.5 py-0.5">
+        <span className="text-base font-bold leading-none text-amber-300">
+          {WIND_GLYPH[state.roundWind]}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-amber-200">
           {WIND_NAMES[state.roundWind]} round
         </span>
-      </div>
+      </span>
 
-      <div className="flex items-center gap-4 text-emerald-50">
-        <div className="flex flex-col items-center">
-          <span className="text-xl font-bold">{state.wall.liveTiles.length}</span>
-          <span className="text-[10px] uppercase tracking-wide text-emerald-200/80">tiles left</span>
-        </div>
-        <div className="h-8 w-px bg-emerald-600/60" />
-        <div className="flex flex-col items-center text-xs">
-          <span className="font-semibold">{state.ruleset.fanMinimum}-fan minimum</span>
-        </div>
-      </div>
+      <span className="text-sm text-emerald-50">
+        <span className="font-bold">{state.wall.liveTiles.length}</span>
+        <span className="ml-1 text-[10px] uppercase tracking-wide text-emerald-200/80">left</span>
+      </span>
 
-      <div className="flex h-20 items-center justify-center">
+      <span className="text-xs font-semibold text-emerald-50">
+        {state.ruleset.fanMinimum}-fan min
+      </span>
+
+      {balance !== null && (
+        <span
+          className={`text-xs font-bold ${balance < 0 ? "text-rose-300" : "text-amber-300"}`}
+          title={`Your ${isOnline ? "online" : "solo"} balance`}
+        >
+          💰 {balance < 0 ? "−" : ""}${Math.abs(balance).toLocaleString()}
+        </span>
+      )}
+
+      <span className="hidden h-6 w-px bg-emerald-600/60 sm:block" />
+
+      <span className="flex h-11 items-center">
         <AnimatePresence mode="wait">
           {lastDiscard ? (
-            <motion.div
+            <motion.span
               key={lastDiscard.tile.id}
-              initial={{ opacity: 0, scale: 0.6, y: -10 }}
+              initial={{ opacity: 0, scale: 0.7, y: -6 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.7 }}
+              exit={{ opacity: 0, scale: 0.8 }}
               transition={{ type: "spring", stiffness: 400, damping: 26 }}
-              className="flex flex-col items-center gap-1"
+              className="flex items-center gap-2"
             >
               <span className="text-[11px] font-medium text-emerald-100/90">
                 {anonymousDiscards
@@ -54,7 +79,7 @@ export function CenterTable() {
               <span className="text-[11px] font-semibold text-amber-300">
                 {tileLabel(lastDiscard.tile)}
               </span>
-            </motion.div>
+            </motion.span>
           ) : (
             <motion.span
               key="empty"
@@ -66,7 +91,7 @@ export function CenterTable() {
             </motion.span>
           )}
         </AnimatePresence>
-      </div>
+      </span>
     </div>
   );
 }

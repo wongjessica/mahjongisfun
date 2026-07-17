@@ -105,8 +105,8 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-1.5 p-2 sm:p-2.5">
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[1.1fr_0.9fr_1.1fr] sm:items-start">
-        <div className="order-3 sm:order-1">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3 sm:items-start">
+        <div className="order-2 sm:order-1">
           <PlayerPanel
             seat={leftSeat}
             isHuman={false}
@@ -115,17 +115,16 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
           />
         </div>
 
-        <div className="order-1 flex flex-col gap-1.5 sm:order-2">
+        <div className="order-1 sm:order-2">
           <PlayerPanel
             seat={topSeat}
             isHuman={false}
             isThinking={thinkingSeat === topSeat}
             position="across"
           />
-          <CenterTable />
         </div>
 
-        <div className="order-4 sm:order-3">
+        <div className="order-3">
           <PlayerPanel
             seat={rightSeat}
             isHuman={false}
@@ -136,6 +135,11 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
       </div>
 
       <DiscardBoard />
+
+      {/* Status bar lives BELOW the discard log and ABOVE your hand, so on
+          mobile (where you're pinned to the bottom of the page) the round
+          wind / tiles left / latest discard are always in view. */}
+      <CenterTable />
 
       <PlayerPanel
         seat={humanSeat}
