@@ -138,13 +138,17 @@ function updatePlayer(state: GameState, seat: number, update: Partial<PlayerStat
 function buildScoringContext(
   state: GameState,
   seat: number,
-  opts: { selfDraw: boolean; isReplacementWin: boolean; isRobbingKong: boolean }
+  opts: { selfDraw: boolean; isReplacementWin: boolean; isRobbingKong: boolean; winningTile?: Tile | null }
 ): ScoringContext {
   const player = state.players[seat];
   return {
     selfDraw: opts.selfDraw,
     isReplacementWin: opts.isReplacementWin,
     isRobbingKong: opts.isRobbingKong,
+    // Which tile kind actually completed the hand -- lets patterns that
+    // care HOW a set was finished (e.g. Kan Kan Wo allows a discard only
+    // for the pair) tell the difference.
+    winningTileKey: opts.winningTile ? tileKey(opts.winningTile) : null,
     // Winning on (or off a discard of) the very last live tile is worth a
     // bonus fan -- at scoring time the wall is empty in exactly those cases.
     isLastTile: state.wall.liveTiles.length === 0,
@@ -164,7 +168,13 @@ function canDeclareWin(
   const player = state.players[seat];
   const concealed = extraTile ? [...player.concealedTiles, extraTile] : player.concealedTiles;
   const decompositions = decomposeHand(concealed, player.melds);
-  return isValidWinDeclaration(decompositions, buildScoringContext(state, seat, opts));
+  // The winning tile: the offered discard/robbed tile, or (on your own
+  // turn) whatever you just drew.
+  const winningTile = extraTile ?? (state.lastDraw?.seat === seat ? state.lastDraw.tile : null);
+  return isValidWinDeclaration(
+    decompositions,
+    buildScoringContext(state, seat, { ...opts, winningTile })
+  );
 }
 
 /** Resolves a just-drawn tile for `seat`: flower/season tiles are set aside
@@ -314,6 +324,7 @@ function handleSelfDrawWin(state: GameState, seat: number): GameState {
     selfDraw: true,
     isReplacementWin: state.lastDrawWasReplacement,
     isRobbingKong: false,
+    winningTile: state.lastDraw?.seat === seat ? state.lastDraw.tile : null,
   });
   if (!isValidWinDeclaration(decompositions, ctx)) return state;
   const score = bestScore(decompositions, ctx)!;
@@ -511,6 +522,7 @@ function applyDiscardWins(
       selfDraw: false,
       isReplacementWin: false,
       isRobbingKong,
+      winningTile: discard,
     });
     if (!isValidWinDeclaration(decompositions, ctx)) continue;
     const score = bestScore(decompositions, ctx);

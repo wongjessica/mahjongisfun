@@ -22,7 +22,15 @@ export function scoreDecomposition(decomposition: Decomposition, ctx: ScoringCon
   const qualifyingFan = breakdown.reduce((sum, entry) => sum + entry.fan, 0);
 
   const flowerEntry = flowerBonusPattern(sets, decomposition, ctx);
-  if (flowerEntry) breakdown.push(flowerEntry);
+  if (flowerEntry) {
+    breakdown.push(flowerEntry);
+  } else if (ctx.flowers.length === 0) {
+    // Winning bare-handed -- not a single flower or season all round -- is
+    // worth a bonus fan. Like flower fan, it's luck rather than hand
+    // pattern, so it adds to the total but never to the qualifying fan
+    // that clears the table minimum.
+    breakdown.push({ label: "No Flowers", fan: 1 });
+  }
 
   const totalFan = breakdown.reduce((sum, entry) => sum + entry.fan, 0);
   return {

@@ -23,6 +23,7 @@ function baseContext(overrides: Partial<ScoringContext> = {}): ScoringContext {
     isReplacementWin: false,
     isRobbingKong: false,
     isLastTile: false,
+    winningTileKey: null,
     seatWind: 2,
     roundWind: 1,
     flowers: [],
@@ -188,7 +189,9 @@ describe("scoring", () => {
     // minimum -- that's exactly the scenario the 0/3-fan toggle should gate.
     const decompositions = decomposeHand(twoFanHand(), []);
     const score = bestScore(decompositions, baseContext())!;
-    expect(score.fan).toBe(1);
+    // Concealed Hand (1) + the non-qualifying No Flowers bonus (1).
+    expect(score.qualifyingFan).toBe(1);
+    expect(score.fan).toBe(2);
 
     expect(isValidWinDeclaration(decompositions, baseContext({ ruleset: createRuleset(0) }))).toBe(
       true
@@ -203,8 +206,8 @@ describe("scoring", () => {
     const fans = [false, true].map(
       (selfDraw) => bestScore(decompositions, baseContext({ selfDraw }))!.fan
     );
-    // baseline Concealed Hand (1), +1 more when self-draw
-    expect(fans).toEqual([1, 2]);
+    // baseline Concealed Hand (1) + No Flowers (1), +1 more when self-draw
+    expect(fans).toEqual([2, 3]);
   });
 
   it("only counts a flower/season that matches the holder's own seat, up to the cap", () => {
@@ -243,6 +246,79 @@ describe("scoring", () => {
     // ...but qualifying (non-flower) fan is only 1, so the win must be illegal.
     expect(score.qualifyingFan).toBe(1);
     expect(isValidWinDeclaration(decompositions, ctx)).toBe(false);
+  });
+
+  it("awards a non-qualifying bonus fan for winning with no flowers at all", () => {
+    const decompositions = decomposeHand(twoFanHand(), []);
+    // baseContext has flowers: [] -- the bare-handed case.
+    const bare = bestScore(decompositions, baseContext())!;
+    expect(bare.breakdown.map((b) => b.label)).toContain("No Flowers");
+    // Counts in the total but never toward the minimum.
+    expect(bare.fan).toBe(bare.qualifyingFan + 1);
+
+    // Any flower at all (even an off-seat one worth nothing) kills it.
+    const withFlower = bestScore(
+      decompositions,
+      baseContext({ seatWind: 1, flowers: [{ id: "f", suit: "flowers", rank: 2 }] })
+    )!;
+    expect(withFlower.breakdown.map((b) => b.label)).not.toContain("No Flowers");
+  });
+
+  it("scores Kan Kan Wo at exactly 10 for concealed self-drawn all-triplets", () => {
+    // Deliberately neutral triplets (three suits, no honors) so no flush /
+    // dragon / wind fan muddies the "exactly 10" arithmetic.
+    const hand = [
+      t("characters", 1), t("characters", 1), t("characters", 1),
+      t("bamboo", 5), t("bamboo", 5), t("bamboo", 5),
+      t("dots", 3), t("dots", 3), t("dots", 3),
+      t("characters", 7), t("characters", 7), t("characters", 7),
+      t("dots", 9), t("dots", 9),
+    ];
+    const decompositions = decomposeHand(hand, []);
+    // Self-draw: Kan Kan Wo (8) + Self-Draw (1) + Concealed Hand (1) = 10.
+    // Give the context one off-seat flower so the No Flowers bonus doesn't
+    // muddy the arithmetic.
+    const flowers = [{ id: "f", suit: "flowers" as const, rank: 3 }];
+    const selfDrawn = bestScore(decompositions, baseContext({ selfDraw: true, flowers }))!;
+    expect(selfDrawn.breakdown.map((b) => b.label)).toContain("Kan Kan Wo");
+    expect(selfDrawn.breakdown.map((b) => b.label)).not.toContain("All Triplets");
+    expect(selfDrawn.fan).toBe(10);
+
+    // Discard completing the PAIR (9 Dots): Kan Kan Wo (9) + Concealed (1) = 10.
+    const pairWin = bestScore(
+      decompositions,
+      baseContext({ selfDraw: false, winningTileKey: "dots-9", flowers })
+    )!;
+    expect(pairWin.breakdown.map((b) => b.label)).toContain("Kan Kan Wo");
+    expect(pairWin.fan).toBe(10);
+
+    // Discard completing a TRIPLET is NOT Kan Kan Wo -- that triplet
+    // wasn't self-drawn. Falls back to plain All Triplets.
+    const tripletWin = bestScore(
+      decompositions,
+      baseContext({ selfDraw: false, winningTileKey: "bamboo-5", flowers })
+    )!;
+    expect(tripletWin.breakdown.map((b) => b.label)).toContain("All Triplets");
+    expect(tripletWin.breakdown.map((b) => b.label)).not.toContain("Kan Kan Wo");
+
+    // An exposed pon anywhere also disqualifies it.
+    const ponMeld: Meld = {
+      type: "pon",
+      tiles: [
+        { id: "p1", suit: "dots", rank: 5 },
+        { id: "p2", suit: "dots", rank: 5 },
+        { id: "p3", suit: "dots", rank: 5 },
+      ],
+    };
+    const exposedHand = [
+      t("characters", 1), t("characters", 1), t("characters", 1),
+      t("bamboo", 5), t("bamboo", 5), t("bamboo", 5),
+      t("dragons", 1), t("dragons", 1), t("dragons", 1),
+      t("dots", 9), t("dots", 9),
+    ];
+    const exposed = bestScore(decomposeHand(exposedHand, [ponMeld]), baseContext({ selfDraw: true, flowers }))!;
+    expect(exposed.breakdown.map((b) => b.label)).toContain("All Triplets");
+    expect(exposed.breakdown.map((b) => b.label)).not.toContain("Kan Kan Wo");
   });
 
   it("awards one bonus fan for a last-tile win", () => {

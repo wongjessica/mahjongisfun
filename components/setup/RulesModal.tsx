@@ -25,6 +25,7 @@ const FAN_TABLE: [string, string][] = [
   ["Half Flush (one suit + honors)", "3"],
   ["Seven Pairs", "4"],
   ["Small Three Dragons", "5"],
+  ["Kan Kan Wo — fully concealed, all triplets self-assembled, won by self-draw (or a discard for the pair only)", "10 total"],
   ["Small Four Winds", "6"],
   ["Full Flush (one suit, no honors)", "7"],
   ["Terminals & Honors (only 1s, 9s, and honors)", "8"],
@@ -110,8 +111,10 @@ export function RulesModal() {
                   <p>
                     Flower #1 is Spring &amp; Plum, #2 Summer &amp; Orchid, #3 Autumn &amp;
                     Chrysanthemum, #4 Winter &amp; Bamboo. Only your own position&apos;s flower or
-                    season scores (+1 fan each, capped at 2) — the dealer&apos;s is always #1.
-                    Flowers alone can never satisfy the win minimum.
+                    season scores (+1 fan each, capped at 2), and winning with no flowers at
+                    all is worth +1. Flower fan (and the no-flower bonus) counts toward your
+                    payout but never toward the win minimum — the hand pattern itself must
+                    clear the table&apos;s 0/3/5 bar.
                   </p>
                 </Section>
 

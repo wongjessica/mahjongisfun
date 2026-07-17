@@ -12,6 +12,10 @@ export interface ScoringContext {
    * last-tile self-draw, or a win off the discard made after the final
    * draw. Either way it's the round's last possible win. */
   isLastTile: boolean;
+  /** tileKey of the tile that completed the hand (drawn or claimed), or
+   * null when unknown -- lets patterns that care HOW a set was finished
+   * (Kan Kan Wo permits a discard only for the pair) tell the difference. */
+  winningTileKey: string | null;
   seatWind: Wind;
   roundWind: Wind;
   flowers: Tile[];
@@ -61,13 +65,29 @@ const flushPattern: FanPattern = (sets, decomposition) => {
   return null;
 };
 
-const allTripletsPattern: FanPattern = (sets, decomposition) => {
+const allTripletsPattern: FanPattern = (sets, decomposition, ctx) => {
   if (decomposition.kind !== "standard") return null;
   const nonPair = sets.filter((s) => s.kind !== "pair");
-  if (nonPair.length === 4 && nonPair.every((s) => s.kind === "triplet")) {
-    return { label: "All Triplets", fan: 3 };
+  if (nonPair.length !== 4 || !nonPair.every((s) => s.kind === "triplet")) {
+    return null;
   }
-  return null;
+
+  // Kan Kan Wo: every triplet self-assembled (fully concealed -- no chi/
+  // pon/exposed kong; a concealed kong is fine), won by self-draw OR by
+  // claiming a discard for the PAIR only (a discard completing a triplet
+  // would mean that triplet wasn't self-drawn). Valued so the classic hand
+  // totals exactly 10 with its inseparable companions: self-draw case
+  // also scores Self-Draw (1) + Concealed Hand (1) on top of 8; the
+  // pair-from-discard case only Concealed Hand (1) on top of 9.
+  const fullyConcealed = decomposition.melds.every((m) => m.type === "kongConcealed");
+  const pair = sets.find((s) => s.kind === "pair");
+  const wonThePair =
+    ctx.winningTileKey !== null && pair !== undefined && ctx.winningTileKey === `${pair.suit}-${pair.rank}`;
+  if (fullyConcealed && (ctx.selfDraw || wonThePair)) {
+    return { label: "Kan Kan Wo", fan: ctx.selfDraw ? 8 : 9 };
+  }
+
+  return { label: "All Triplets", fan: 3 };
 };
 
 // "Ping Wu" / All Sequences: all 4 sets are chows (no triplets/kongs,
