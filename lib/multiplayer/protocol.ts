@@ -22,6 +22,9 @@ export interface RoomPlayer {
   name: string;
   /** Chosen avatar emoji (optional for rooms created before icons existed). */
   icon?: string;
+  /** Firebase auth uid when this player is signed in -- lets co-players link
+   * each other into their friends leaderboards. Absent for guests. */
+  uid?: string;
   /** Seat is assigned at join time (join order), so it's stable from the
    * lobby through the whole match. */
   seat: number;

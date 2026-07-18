@@ -1,4 +1,3 @@
-import { FirebaseApp, initializeApp } from "firebase/app";
 import {
   Database,
   child,
@@ -11,7 +10,7 @@ import {
   serverTimestamp,
   set,
 } from "firebase/database";
-import { FIREBASE_CONFIG } from "./firebaseConfig";
+import { getFirebaseApp } from "@/lib/firebase/app";
 import { RemoteAction, RoomConfig, RoomPlayer, RoomSnapshot, RoomStatus, RoundInfo } from "./protocol";
 import { RoomTransport } from "./transport";
 
@@ -69,14 +68,13 @@ function normalizeRoom(raw: unknown): RoomSnapshot | null {
 }
 
 export class FirebaseTransport implements RoomTransport {
-  private app: FirebaseApp;
   private db: Database;
   private serverTimeOffsetMs = 0;
 
   constructor() {
-    if (!FIREBASE_CONFIG) throw new Error("FirebaseTransport requires FIREBASE_CONFIG to be set");
-    this.app = initializeApp(FIREBASE_CONFIG);
-    this.db = getDatabase(this.app);
+    const app = getFirebaseApp();
+    if (!app) throw new Error("FirebaseTransport requires Firebase to be configured");
+    this.db = getDatabase(app);
     // Presence stamps are written with serverTimestamp(), so liveness math
     // must run on the server's clock, not this device's.
     onValue(ref(this.db, ".info/serverTimeOffset"), (snapshot) => {

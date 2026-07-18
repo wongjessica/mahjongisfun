@@ -21,13 +21,16 @@ export function getBalance(kind: WalletKind): number {
 }
 
 export function addEarnings(kind: WalletKind, amount: number): number {
-  const next = getBalance(kind) + amount;
+  return setBalance(kind, getBalance(kind) + amount);
+}
+
+export function setBalance(kind: WalletKind, amount: number): number {
   try {
-    localStorage.setItem(KEYS[kind], String(next));
+    localStorage.setItem(KEYS[kind], String(amount));
   } catch {
     // Storage full/blocked -- the game must keep working regardless.
   }
-  return next;
+  return amount;
 }
 
 /** Dollars per fan -- a 5-fan hand moves $50 per paying player. */

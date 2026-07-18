@@ -6,8 +6,9 @@ import { TileFace } from "@/components/tiles/TileFace";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
 import { RulesModal } from "@/components/setup/RulesModal";
 import { SoundToggle } from "@/components/SoundToggle";
+import { AccountPanel } from "@/components/profile/AccountPanel";
+import { useProfile } from "@/components/profile/ProfileContext";
 import { FanMinimum } from "@/lib/mahjong/scoring/ruleset";
-import { getBalance } from "@/lib/wallet";
 
 export type GameSpeed = "fast" | "slow";
 
@@ -79,11 +80,11 @@ export function SetupForm({
   const [anonymousDiscards, setAnonymousDiscards] = useState(false);
   const [speed, setSpeed] = useState<GameSpeed>("slow");
   const [icon, setIcon] = useState("🙂");
-  const [wallet, setWallet] = useState<{ solo: number; online: number } | null>(null);
-  // localStorage isn't available during prerender -- load on mount.
+  const { profile } = useProfile();
+  const wallet = profile.wallet;
+  // localStorage isn't available during prerender -- load the icon on mount.
   useEffect(() => {
     setIcon(getSavedIcon());
-    setWallet({ solo: getBalance("solo"), online: getBalance("online") });
   }, []);
 
   return (
@@ -111,17 +112,17 @@ export function SetupForm({
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900">Hong Kong Mahjong</h1>
         <p className="mt-1 text-sm text-slate-500">Solo play against 3 intermediate bots.</p>
-        {wallet && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold">
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
-              🤖 Solo ${wallet.solo.toLocaleString()}
-            </span>
-            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
-              👥 Online ${wallet.online.toLocaleString()}
-            </span>
-          </div>
-        )}
+        <div className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+            🤖 Solo ${wallet.solo.toLocaleString()}
+          </span>
+          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
+            👥 Online ${wallet.online.toLocaleString()}
+          </span>
+        </div>
       </div>
+
+      <AccountPanel />
 
       <IconPicker
         value={icon}

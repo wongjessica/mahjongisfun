@@ -1,11 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { SoundToggle } from "@/components/SoundToggle";
+import { useProfile } from "@/components/profile/ProfileContext";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
-import { getBalance } from "@/lib/wallet";
 
 const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "北" };
@@ -16,15 +15,9 @@ const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "�
  * live at the bottom of the page staring at your own tiles. */
 export function CenterTable() {
   const { state, humanSeat, botNames, anonymousDiscards, isOnline } = useGame();
+  const { profile } = useProfile();
   const { lastDiscard } = state;
-
-  // localStorage read deferred to an effect (no storage access during
-  // render); refreshed on every state change so the round-end credit shows
-  // up as soon as it lands.
-  const [balance, setBalance] = useState<number | null>(null);
-  useEffect(() => {
-    setBalance(getBalance(isOnline ? "online" : "solo"));
-  }, [state, isOnline]);
+  const balance = isOnline ? profile.wallet.online : profile.wallet.solo;
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-2xl border border-emerald-950/40 bg-gradient-to-br from-emerald-800 to-emerald-900 px-4 py-1.5 shadow-inner">
@@ -46,14 +39,12 @@ export function CenterTable() {
         {state.ruleset.fanMinimum}-fan min
       </span>
 
-      {balance !== null && (
-        <span
-          className={`text-xs font-bold ${balance < 0 ? "text-rose-300" : "text-amber-300"}`}
-          title={`Your ${isOnline ? "online" : "solo"} balance`}
-        >
-          💰 {balance < 0 ? "−" : ""}${Math.abs(balance).toLocaleString()}
-        </span>
-      )}
+      <span
+        className={`text-xs font-bold ${balance < 0 ? "text-rose-300" : "text-amber-300"}`}
+        title={`Your ${isOnline ? "online" : "solo"} balance`}
+      >
+        💰 {balance < 0 ? "−" : ""}${Math.abs(balance).toLocaleString()}
+      </span>
 
       <SoundToggle className="text-emerald-100 hover:bg-emerald-950/40" />
 

@@ -9,7 +9,7 @@ import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
 import { toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 import { Wind, nextSeat } from "@/lib/mahjong/state";
-import { addEarnings, earningsForRound } from "@/lib/wallet";
+import { useProfile } from "@/components/profile/ProfileContext";
 import { ActionBar } from "./ActionBar";
 import { CenterTable } from "./CenterTable";
 import { fireWinConfetti } from "./confetti";
@@ -43,6 +43,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
   const thinkingSeat = useBotDriver(rollingDice);
   useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat, isOnline } = useGame();
+  const { recordRound } = useProfile();
   useGameSounds(state, humanSeat, rollingDice);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   // Closing the round-end overlay just hides it -- the round is still over
@@ -62,15 +63,15 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
     fireWinConfetti();
   }, [rollingDice, state.turn.phase, state.winners, humanSeat]);
 
-  // Credit the play-money wallet exactly once per finished round (same
-  // once-per-round ref discipline as the confetti). Solo and online play
-  // pay into separate balances.
+  // Credit the wallet and record stats exactly once per finished round (same
+  // once-per-round ref discipline as the confetti). recordRound routes to
+  // the cloud profile when signed in, else localStorage.
   const walletCreditedRef = useRef(false);
   useEffect(() => {
     if (state.turn.phase !== "round-ended" || walletCreditedRef.current) return;
     walletCreditedRef.current = true;
-    addEarnings(isOnline ? "online" : "solo", earningsForRound(state, humanSeat));
-  }, [state, humanSeat, isOnline]);
+    recordRound(state, humanSeat, isOnline);
+  }, [state, humanSeat, isOnline, recordRound]);
 
   // Auto-select the tile you just drew -- discarding it (the common case)
   // is then a single tap, instead of having to select it first. Guarded by

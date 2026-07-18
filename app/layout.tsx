@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Providers } from "@/components/Providers";
 import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
 import { SoundInit } from "@/components/SoundInit";
 import "./globals.css";
@@ -32,7 +33,7 @@ export default function RootLayout({
       >
         <RegisterServiceWorker />
         <SoundInit />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

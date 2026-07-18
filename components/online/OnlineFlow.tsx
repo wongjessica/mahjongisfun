@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { GameBoard } from "@/components/board/GameBoard";
 import { GameContextProvider } from "@/components/game/GameContext";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
+import { useProfile } from "@/components/profile/ProfileContext";
+import { getCurrentUid } from "@/lib/profile/session";
 import { normalizeRoomCode } from "@/lib/multiplayer/protocol";
 import { Lobby } from "./Lobby";
 import {
@@ -173,6 +175,18 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
     () => (room?.round ? hashCode(code) ^ room.round.id : 0),
     [code, room?.round]
   );
+
+  // Once a game is underway, record every other signed-in player at the
+  // table as a friend, so they show up on each other's leaderboards.
+  const { recordFriends } = useProfile();
+  useEffect(() => {
+    if (!room || room.status !== "playing") return;
+    const friends: Record<string, string> = {};
+    for (const p of Object.values(room.players)) {
+      if (p.uid && p.uid !== getCurrentUid()) friends[p.uid] = p.name;
+    }
+    if (Object.keys(friends).length > 0) recordFriends(friends);
+  }, [room, recordFriends]);
 
   if (roomExists === false) {
     return (
