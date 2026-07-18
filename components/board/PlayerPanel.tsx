@@ -221,7 +221,12 @@ export function PlayerPanel({
                   key={tile.id}
                   tile={tile}
                   size={handSize}
-                  layoutId={tile.id}
+                  // No layout FLIP for hand tiles: the shared-element
+                  // transition (hand <-> drawn slot <-> discard) was
+                  // occasionally stranding a tile at opacity 0, leaving an
+                  // invisible gap in the hand. Hand tiles now just fade in
+                  // and out, which can't strand them.
+                  layoutAnimate={false}
                   selected={tile.id === selectedTileId}
                   onClick={isHuman && onSelectTile ? () => onSelectTile(tile.id) : undefined}
                   onDoubleClick={
