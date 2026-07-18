@@ -601,6 +601,26 @@ function handleCallResponse(
   const responses = { ...window.responses, [seat]: response };
   const next: GameState = { ...state, pendingCallWindow: { ...window, responses } };
 
+  // A declared win outranks pon/chi/kong, so once it's in we only keep the
+  // window open for OTHER seats that could also win off this tile (the
+  // standard multi-winner case) -- never for pon/chi responders, and never
+  // for a slow/disconnected seat that couldn't win anyway. This is what
+  // makes a declared win resolve promptly instead of hanging until every
+  // eligible seat has clicked through.
+  if (response.type === "win") {
+    const stillCouldWin = window.eligibleSeats.some(
+      (s) =>
+        !responses[s] &&
+        canDeclareWin(next, s, window.discardedTile, {
+          selfDraw: false,
+          isReplacementWin: false,
+          isRobbingKong: window.winOnly,
+        })
+    );
+    if (stillCouldWin) return next;
+    return resolveCallWindow(next, window.discardedTile, window.discardingSeat, responses, window.winOnly);
+  }
+
   const allResponded = window.eligibleSeats.every((s) => responses[s]);
   if (!allResponded) return next;
 

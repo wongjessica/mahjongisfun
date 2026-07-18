@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "../rng";
 import { buildFullSet } from "../tiles";
-import { DEAD_WALL_SIZE, buildWall, dealInitialHands } from "../wall";
+import { buildWall, dealInitialHands } from "../wall";
 
 describe("wall", () => {
   it("builds a full 144-tile set with the correct suit/honor/bonus split", () => {
@@ -16,10 +16,10 @@ describe("wall", () => {
     expect(new Set(tiles.map((t) => t.id)).size).toBe(144);
   });
 
-  it("splits a shuffled set into a 14-tile dead wall and the remaining live wall", () => {
+  it("keeps all 144 tiles in the live wall with no reserved dead wall", () => {
     const wall = buildWall(createRng(42));
-    expect(wall.deadWall).toHaveLength(DEAD_WALL_SIZE);
-    expect(wall.liveTiles).toHaveLength(144 - DEAD_WALL_SIZE);
+    expect(wall.deadWall).toHaveLength(0);
+    expect(wall.liveTiles).toHaveLength(144);
   });
 
   it("deals 13/13/13/14 tiles with no duplicate ids", () => {
@@ -32,7 +32,8 @@ describe("wall", () => {
 
     const allDealt = hands.flat();
     expect(new Set(allDealt.map((t) => t.id)).size).toBe(53);
-    expect(remaining.liveTiles).toHaveLength(144 - DEAD_WALL_SIZE - 53);
+    // Every tile stays playable now: 144 minus the 53 dealt.
+    expect(remaining.liveTiles).toHaveLength(144 - 53);
   });
 
   it("is deterministic for a fixed seed", () => {

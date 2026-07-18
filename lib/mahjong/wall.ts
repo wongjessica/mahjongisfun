@@ -1,19 +1,18 @@
 import { RNG } from "./rng";
 import { Tile, buildFullSet, shuffle } from "./tiles";
 
-export const DEAD_WALL_SIZE = 14;
 export const HAND_SIZE = 13;
 
 export interface Wall {
   liveTiles: Tile[];
+  /** Retained for state-shape/serialization stability but always empty:
+   * this variant reserves no dead wall, so every tile is drawable and the
+   * round only draws out when the wall is truly empty. */
   deadWall: Tile[];
 }
 
 export function buildWall(rng: RNG): Wall {
-  const shuffled = shuffle(buildFullSet(), rng);
-  const deadWall = shuffled.slice(0, DEAD_WALL_SIZE);
-  const liveTiles = shuffled.slice(DEAD_WALL_SIZE);
-  return { liveTiles, deadWall };
+  return { liveTiles: shuffle(buildFullSet(), rng), deadWall: [] };
 }
 
 export function liveTileCount(wall: Wall): number {
@@ -26,22 +25,25 @@ export function isWallExhausted(wall: Wall): boolean {
 
 export function drawFromWall(wall: Wall): { tile: Tile; wall: Wall } {
   if (wall.liveTiles.length === 0) {
-    throw new Error("Cannot draw: live wall is empty");
+    throw new Error("Cannot draw: wall is empty");
   }
   const [tile, ...rest] = wall.liveTiles;
   return { tile, wall: { ...wall, liveTiles: rest } };
 }
 
 export function hasReplacementTile(wall: Wall): boolean {
-  return wall.deadWall.length > 0;
+  return wall.liveTiles.length > 0;
 }
 
+/** Flower/kong replacement tiles come from the BACK of the wall (the end a
+ * dead wall would traditionally occupy) while normal draws come from the
+ * front, so the two never collide and no tile is set permanently aside. */
 export function drawReplacement(wall: Wall): { tile: Tile; wall: Wall } {
-  if (wall.deadWall.length === 0) {
-    throw new Error("Cannot draw replacement: dead wall is empty");
+  if (wall.liveTiles.length === 0) {
+    throw new Error("Cannot draw replacement: wall is empty");
   }
-  const [tile, ...rest] = wall.deadWall;
-  return { tile, wall: { ...wall, deadWall: rest } };
+  const tile = wall.liveTiles[wall.liveTiles.length - 1];
+  return { tile, wall: { ...wall, liveTiles: wall.liveTiles.slice(0, -1) } };
 }
 
 export interface InitialDeal {
