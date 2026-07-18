@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { SoundToggle } from "@/components/SoundToggle";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 import { getBalance } from "@/lib/wallet";
 
@@ -53,6 +54,8 @@ export function CenterTable() {
           💰 {balance < 0 ? "−" : ""}${Math.abs(balance).toLocaleString()}
         </span>
       )}
+
+      <SoundToggle className="text-emerald-100 hover:bg-emerald-950/40" />
 
       <span className="hidden h-6 w-px bg-emerald-600/60 sm:block" />
 

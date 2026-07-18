@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { playSound } from "@/lib/sound";
 
 const DIE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
@@ -60,6 +61,7 @@ export function DiceRoll({ onDone, seed }: { onDone: () => void; seed?: number }
   const [settled, setSettled] = useState(false);
 
   useEffect(() => {
+    playSound("dice");
     // The total must only appear once every die has actually stopped
     // spinning -- showing it earlier gives away the result before the
     // "roll" visually finishes, which doesn't read as a real dice roll.

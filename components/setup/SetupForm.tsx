@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { TileFace } from "@/components/tiles/TileFace";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
 import { RulesModal } from "@/components/setup/RulesModal";
+import { SoundToggle } from "@/components/SoundToggle";
 import { FanMinimum } from "@/lib/mahjong/scoring/ruleset";
 import { getBalance } from "@/lib/wallet";
 
@@ -93,6 +94,7 @@ export function SetupForm({
       className="relative mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
     >
       <RulesModal />
+      <SoundToggle className="absolute left-3 top-3 border-2 border-slate-200 text-slate-500 hover:border-slate-300" />
       <div className="flex justify-center gap-1.5">
         {DECORATIVE_TILES.map((tile, i) => (
           <motion.div

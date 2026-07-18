@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
+import { useGameSounds } from "@/components/game/useGameSounds";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
 import { toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
@@ -42,6 +43,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
   const thinkingSeat = useBotDriver(rollingDice);
   useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat, isOnline } = useGame();
+  useGameSounds(state, humanSeat, rollingDice);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   // Closing the round-end overlay just hides it -- the round is still over
   // (Next Round/New Match haven't happened) -- so the board can be inspected
