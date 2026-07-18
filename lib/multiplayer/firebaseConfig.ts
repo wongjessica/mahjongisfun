@@ -28,7 +28,14 @@ import type { FirebaseOptions } from "firebase/app";
  */
 export const FIREBASE_CONFIG: FirebaseOptions | null = {
   apiKey: "AIzaSyB3_vp0cTY2T3L4w021ePOrlIGwAfclx7U",
-  authDomain: "mahjongisfun-10815.firebaseapp.com",
+  // A subdomain of the APP's own domain (not the default firebaseapp.com),
+  // served by Firebase Hosting. Google sign-in bounces through this auth
+  // handler; keeping it on jessicawong.dev means iOS Safari treats it as
+  // the same site as the app and doesn't wall off the login state
+  // (the "missing initial state" error). Must stay in sync with the
+  // custom domain attached to Firebase Hosting + the authorized-domains
+  // list.
+  authDomain: "auth.jessicawong.dev",
   // Not in the console's copy-paste snippet, but required for Realtime
   // Database -- this is the database's actual address (us-central1).
   databaseURL: "https://mahjongisfun-10815-default-rtdb.firebaseio.com",
