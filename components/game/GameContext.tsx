@@ -30,6 +30,9 @@ interface GameContextValue {
    * (online: host only -- everyone else sees a waiting note instead). */
   canAdvanceRound: boolean;
   isOnline: boolean;
+  /** True when this client is watching, not seated in the current round --
+   * no hand is "yours" (humanSeat is -1) and nothing is interactive. */
+  isSpectator?: boolean;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);

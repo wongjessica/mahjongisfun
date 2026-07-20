@@ -101,9 +101,12 @@ function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId:
  * per seat); anonymous mode pools everything into one scattered table. */
 export function DiscardBoard() {
   const { state, humanSeat, anonymousDiscards } = useGame();
-  const rightSeat = nextSeat(humanSeat);
-  const topSeat = nextSeat(rightSeat);
-  const leftSeat = nextSeat(topSeat);
+  // Order rows around the viewer's own seat (you first). A spectator has no
+  // seat (humanSeat -1), so just show the four seats in order.
+  const seatOrder =
+    humanSeat >= 0
+      ? [humanSeat, nextSeat(humanSeat), nextSeat(nextSeat(humanSeat)), nextSeat(nextSeat(nextSeat(humanSeat)))]
+      : [0, 1, 2, 3];
 
   const lastDiscardId = state.lastDiscard?.tile.id ?? null;
   const allDiscards = state.players.flatMap((p) => p.discards);
@@ -126,10 +129,9 @@ export function DiscardBoard() {
         <AnonymousPool tiles={allDiscards} lastDiscardId={lastDiscardId} />
       ) : (
         <div className="grid grid-cols-[4.5rem_1fr]">
-          <SeatRow seat={humanSeat} isHuman isFirst />
-          <SeatRow seat={rightSeat} isHuman={false} isFirst={false} />
-          <SeatRow seat={topSeat} isHuman={false} isFirst={false} />
-          <SeatRow seat={leftSeat} isHuman={false} isFirst={false} />
+          {seatOrder.map((seat, i) => (
+            <SeatRow key={seat} seat={seat} isHuman={seat === humanSeat} isFirst={i === 0} />
+          ))}
         </div>
       )}
     </motion.div>

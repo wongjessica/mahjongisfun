@@ -9,6 +9,7 @@ import { useProfile } from "@/components/profile/ProfileContext";
 import { getCurrentUid } from "@/lib/profile/session";
 import { normalizeRoomCode } from "@/lib/multiplayer/protocol";
 import { Lobby } from "./Lobby";
+import { SpectatorView } from "./SpectatorView";
 import {
   JoinError,
   createOnlineRoom,
@@ -224,18 +225,45 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
     );
   }
 
-  if (mySeat < 0 || !gameState || !room.round) {
+  if (!gameState || !room.round) {
     return (
       <Centered>
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white p-8 text-center shadow-2xl">
-          <p className="text-sm font-semibold text-slate-700">
-            {mySeat < 0 ? "This game started without you." : "Loading the table…"}
-          </p>
+          <p className="text-sm font-semibold text-slate-700">Loading the table…</p>
           <button onClick={leaveAndExit} className="text-xs font-medium text-emerald-700 underline">
             ← Back
           </button>
         </div>
       </Centered>
+    );
+  }
+
+  // Am I actually playing THIS round? Only if I hold a seat the current deal
+  // marked as human. A spectator (no seat) or someone who claimed a still-bot
+  // seat for next round watches instead.
+  const iAmPlaying = mySeat >= 0 && !gameState.players[mySeat]?.isBot;
+
+  if (!iAmPlaying) {
+    return (
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)]">
+        <GameContextProvider
+          value={{
+            state: gameState,
+            dispatch,
+            humanSeat: -1,
+            anonymousDiscards: room.config.anonymousDiscards,
+            speed: room.config.speed,
+            botNames: seatNames,
+            icons: seatIcons,
+            driveSeats: [],
+            canAdvanceRound: false,
+            isOnline: true,
+            isSpectator: true,
+          }}
+        >
+          <SpectatorView online={online} code={code} onLeave={leaveAndExit} />
+        </GameContextProvider>
+      </main>
     );
   }
 

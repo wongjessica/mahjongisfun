@@ -100,11 +100,11 @@ export async function joinOnlineRoom(
   const alreadyIn = Boolean(room.players[playerId]);
   if (!alreadyIn) {
     if (room.status !== "lobby") {
-      // Mid-game joins are only allowed into an ORPHANED human seat: one
-      // the round was dealt with a human in, whose player has since left
-      // (e.g. accidentally hit "Leave room" -- their seat is being
-      // bot-driven until someone reclaims it). Codes are shared among
-      // friends, so whoever holds the code may take the seat over.
+      // A running room always lets you in. If a seat the current round was
+      // dealt to a HUMAN is now empty (someone left, it's being bot-covered),
+      // take it and start playing immediately. Otherwise join as a SPECTATOR
+      // (seat -1): watch the game, and take an open bot seat from the
+      // spectator view to be dealt in next round.
       const taken = new Set(Object.values(room.players).map((p) => p.seat));
       const dealtHumans: number[] = room.round
         ? (JSON.parse(room.round.initialStateJson) as { players: { seat: number; isBot: boolean }[] })
@@ -112,13 +112,12 @@ export async function joinOnlineRoom(
             .map((p) => p.seat)
         : [];
       const orphanSeat = dealtHumans.find((seat) => !taken.has(seat));
-      if (orphanSeat === undefined) return { error: "in-progress" };
       await transport.setPlayer(code, {
         id: playerId,
         name: playerName,
         icon,
         ...uidField(),
-        seat: orphanSeat,
+        seat: orphanSeat ?? -1,
         joinedAt: transport.now(),
         lastSeen: transport.now(),
       });
@@ -234,22 +233,26 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     return icons;
   }, [room]);
 
-  // The acting host's bot AI drives: real bot seats, plus any human seat
-  // whose player has been unreachable longer than the takeover grace period.
-  // Everyone else drives nothing -- they only ever dispatch for themselves.
+  // The acting host's bot AI drives: every seat the CURRENT ROUND was dealt
+  // as a bot (keyed off the round's own isBot, not off player records -- so a
+  // spectator who claims a bot seat for NEXT round doesn't make the host stop
+  // driving that bot this round), plus any human seat whose player has been
+  // unreachable past the takeover grace period. Everyone else drives nothing.
   const driveSeats = useMemo(() => {
     if (!room || !gameState || !isActingHost) return [];
+    const playerBySeat = new Map<number, (typeof room.players)[string]>();
+    for (const player of Object.values(room.players)) {
+      if (player.seat >= 0) playerBySeat.set(player.seat, player);
+    }
     const seats: number[] = [];
-    const humanBySeat = new Map<number, (typeof room.players)[string]>();
-    for (const player of Object.values(room.players)) humanBySeat.set(player.seat, player);
-    for (const player of gameState.players) {
-      if (player.seat === mySeat) continue;
-      const human = humanBySeat.get(player.seat);
-      if (!human) {
-        seats.push(player.seat);
-      } else if (now - human.lastSeen > BOT_TAKEOVER_AFTER_MS) {
-        seats.push(player.seat);
+    for (const gp of gameState.players) {
+      if (gp.seat === mySeat) continue; // the host plays its own seat manually
+      if (gp.isBot) {
+        seats.push(gp.seat);
+        continue;
       }
+      const human = playerBySeat.get(gp.seat);
+      if (!human || now - human.lastSeen > BOT_TAKEOVER_AFTER_MS) seats.push(gp.seat);
     }
     return seats;
   }, [room, gameState, isActingHost, mySeat, now]);
@@ -348,13 +351,16 @@ export function useOnlineRoom(code: string): OnlineRoomState {
     if (roomRef.current) await transport.setConfig(roomRef.current.code, config);
   }, []);
 
-  /** Move to a different seat while in the lobby. Checked against the
-   * latest snapshot; a same-instant race between two claimers is resolved
-   * for good at startGame (earliest-joined keeps the seat). */
+  /** Take a seat that no other player holds -- in the lobby (rearranging
+   * before start) or mid-game (a spectator claiming an open bot seat). If
+   * the current round dealt that seat as a human whose player left, the
+   * claimant plays immediately; if it's still a bot this round, they're
+   * dealt in on the next round. Same-instant races resolve deterministically
+   * at startGame/nextRound (earliest-joined keeps it). */
   const claimSeat = useCallback(
     async (seat: number) => {
       const current = roomRef.current;
-      if (!current || current.status !== "lobby") return;
+      if (!current || seat < 0 || seat > 3) return;
       const me = current.players[playerId];
       if (!me || me.seat === seat) return;
       const occupied = Object.values(current.players).some((p) => p.id !== playerId && p.seat === seat);
