@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ToggleRow, optionActive, optionBase, optionInactive } from "@/components/setup/SetupForm";
 import { RoomConfig, isPlayerConnected, playersInJoinOrder } from "@/lib/multiplayer/protocol";
 import { isOnlineAcrossDevices } from "@/lib/multiplayer/getTransport";
+import { QrCode } from "./QrCode";
 import { OnlineRoomState } from "./useOnlineRoom";
 
 const WIND_LABELS = ["East", "South", "West", "North"];
@@ -16,10 +17,15 @@ const WIND_LABELS = ["East", "South", "West", "North"];
 export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: () => void }) {
   const { room, isActingHost, now, startGame, setConfig, mySeat, claimSeat } = online;
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [starting, setStarting] = useState(false);
 
   if (!room) return null;
   const config = room.config;
+  const inviteUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}?room=${room.code}`
+      : "";
   const ordered = playersInJoinOrder(room);
   const connectedCount = ordered.filter((p) => isPlayerConnected(p, now)).length;
   const canStart = isActingHost && connectedCount >= 2 && !starting;
@@ -61,6 +67,24 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
         <p className="mt-1 text-xs text-slate-400">
           Friends join with this code{isOnlineAcrossDevices() ? "" : " (device-only mode: works between tabs on this device until Firebase is configured)"}.
         </p>
+        <button
+          onClick={() => setShowQr((v) => !v)}
+          className="mt-2 text-xs font-semibold text-emerald-600 underline hover:text-emerald-800"
+        >
+          {showQr ? "Hide QR code" : "📱 Show QR code"}
+        </button>
+        {showQr && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-2 flex flex-col items-center gap-1 overflow-hidden"
+          >
+            <div className="rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
+              <QrCode value={inviteUrl} size={200} />
+            </div>
+            <p className="text-xs text-slate-400">Scan with a phone camera to join instantly.</p>
+          </motion.div>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
