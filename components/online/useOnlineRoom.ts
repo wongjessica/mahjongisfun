@@ -21,6 +21,15 @@ import { getTransport } from "@/lib/multiplayer/getTransport";
 import { assignNamesForSeats } from "@/components/game/botNames";
 import { getCurrentUid } from "@/lib/profile/session";
 
+/** The signed-in uid as a spreadable field, or {} for guests. Firebase RTDB
+ * REJECTS any write containing `undefined`, so a guest's absent uid must be
+ * an omitted key, never `uid: undefined` -- otherwise room create/join
+ * throws and guests can't play online at all. */
+function uidField(): { uid?: string } {
+  const uid = getCurrentUid();
+  return uid ? { uid } : {};
+}
+
 const PLAYER_ID_KEY = "mahjong-player-id";
 const PLAYER_NAME_KEY = "mahjong-player-name";
 
@@ -67,7 +76,7 @@ export async function createOnlineRoom(playerName: string, icon: string): Promis
     config: DEFAULT_ROOM_CONFIG,
     players: {
       // Creator starts at East (seat 0) but can move in the lobby.
-      [playerId]: { id: playerId, name: playerName, icon, uid: getCurrentUid() ?? undefined, seat: 0, joinedAt: now, lastSeen: now },
+      [playerId]: { id: playerId, name: playerName, icon, ...uidField(), seat: 0, joinedAt: now, lastSeen: now },
     },
     botNames: {},
     round: null,
@@ -108,7 +117,7 @@ export async function joinOnlineRoom(
         id: playerId,
         name: playerName,
         icon,
-        uid: getCurrentUid() ?? undefined,
+        ...uidField(),
         seat: orphanSeat,
         joinedAt: transport.now(),
         lastSeen: transport.now(),
@@ -123,7 +132,7 @@ export async function joinOnlineRoom(
       id: playerId,
       name: playerName,
       icon,
-      uid: getCurrentUid() ?? undefined,
+      ...uidField(),
       seat,
       joinedAt: transport.now(),
       lastSeen: transport.now(),
