@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { GameBoard } from "@/components/board/GameBoard";
+import { useState } from "react";
 import { GameProvider } from "@/components/game/GameContext";
 import { assignBotNames } from "@/components/game/botNames";
-import { OnlineFlow } from "@/components/online/OnlineFlow";
+import { BetaTable } from "@/components/beta/BetaTable";
+import { RotatePrompt } from "@/components/beta/RotatePrompt";
 import { SetupConfig, SetupForm } from "@/components/setup/SetupForm";
 import { createInitialState } from "@/lib/mahjong/reducer";
 import { GameState, Wind } from "@/lib/mahjong/state";
@@ -14,22 +14,12 @@ const HUMAN_SEAT = 0;
 
 type MatchConfig = Pick<SetupConfig, "fanMinimum" | "anonymousDiscards" | "speed" | "icon">;
 
-export default function Home() {
+/** The BETA "authentic table" experience -- a completely separate landscape
+ * presentation over the SAME game engine, so it never touches the classic
+ * UI. Solo vs bots for now. */
+export default function BetaPage() {
   const [initialState, setInitialState] = useState<GameState | null>(null);
   const [matchConfig, setMatchConfig] = useState<MatchConfig | null>(null);
-  const [mode, setMode] = useState<"solo" | "online">("solo");
-  // An invite link (?room=CODE) drops the visitor straight into the online
-  // join screen with the code prefilled.
-  const [inviteCode, setInviteCode] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    const fromUrl = new URLSearchParams(window.location.search).get("room");
-    if (fromUrl) {
-      setInviteCode(fromUrl);
-      setMode("online");
-    }
-  }, []);
-  // Generated once per match (not per round), so bots keep the same name
-  // across "Next Round" transitions -- only a full "New Match" reshuffles it.
   const [botNames, setBotNames] = useState<Record<number, string>>({});
   const [gameKey, setGameKey] = useState(0);
 
@@ -44,12 +34,9 @@ export default function Home() {
       icon: config.icon,
     });
     setBotNames(assignBotNames(HUMAN_SEAT));
-    setGameKey((key) => key + 1);
+    setGameKey((k) => k + 1);
   };
 
-  // Continues the same match: same ruleset/settings, but the dealer, table
-  // wind, and scores carry forward per the outcome of the round that just
-  // ended (computed by GameBoard, which has the ended state).
   const startNextRound = (
     nextDealerIndex: number,
     startingScores: [number, number, number, number],
@@ -66,29 +53,26 @@ export default function Home() {
         startingScores,
       })
     );
-    setGameKey((key) => key + 1);
+    setGameKey((k) => k + 1);
   };
-
-  if (mode === "online") {
-    return <OnlineFlow initialRoomCode={inviteCode} onBack={() => setMode("solo")} />;
-  }
 
   if (!initialState || !matchConfig) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] p-4">
-        <SetupForm onStart={startGame} onPlayOnline={() => setMode("online")} />
-        <Link
-          href="/beta"
-          className="flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-950/30 px-4 py-2 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-900/40"
-        >
-          🧪 Try the Beta Table <span className="text-xs font-normal text-amber-200/70">(new authentic look)</span>
+        <div className="rounded-full border border-amber-400/40 bg-amber-950/30 px-4 py-1 text-xs font-bold uppercase tracking-widest text-amber-300">
+          🧪 Beta · Authentic Table
+        </div>
+        <SetupForm onStart={startGame} />
+        <Link href="/" className="text-xs font-medium text-emerald-200/70 underline hover:text-emerald-100">
+          ← Back to the classic app
         </Link>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)]">
+    <main className="h-[100dvh] w-full overflow-hidden bg-black">
+      <RotatePrompt />
       <GameProvider
         key={gameKey}
         initialState={initialState}
@@ -98,7 +82,7 @@ export default function Home() {
         botNames={botNames}
         icons={{ [HUMAN_SEAT]: matchConfig.icon }}
       >
-        <GameBoard onNextRound={startNextRound} onNewMatch={() => setInitialState(null)} />
+        <BetaTable onNextRound={startNextRound} onNewMatch={() => setInitialState(null)} />
       </GameProvider>
     </main>
   );
