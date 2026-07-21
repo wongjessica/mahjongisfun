@@ -259,6 +259,7 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
             canAdvanceRound: false,
             isOnline: true,
             isSpectator: true,
+            roomCode: code,
           }}
         >
           <SpectatorView online={online} code={code} onLeave={leaveAndExit} />
@@ -282,6 +283,7 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
           driveSeats,
           canAdvanceRound: isActingHost,
           isOnline: true,
+          roomCode: code,
         }}
       >
         <GameBoard

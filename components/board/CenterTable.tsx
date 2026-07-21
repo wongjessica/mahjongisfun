@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { SoundToggle } from "@/components/SoundToggle";
+import { InviteButton } from "@/components/online/InviteButton";
 import { useProfile } from "@/components/profile/ProfileContext";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 
@@ -14,7 +15,7 @@ const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "�
  * (not up with the opponents) so it stays on-screen on mobile, where you
  * live at the bottom of the page staring at your own tiles. */
 export function CenterTable() {
-  const { state, humanSeat, botNames, anonymousDiscards, isOnline } = useGame();
+  const { state, humanSeat, botNames, anonymousDiscards, isOnline, roomCode } = useGame();
   const { profile } = useProfile();
   const { lastDiscard } = state;
   const balance = isOnline ? profile.wallet.online : profile.wallet.solo;
@@ -47,6 +48,8 @@ export function CenterTable() {
       </span>
 
       <SoundToggle className="text-emerald-100 hover:bg-emerald-950/40" />
+
+      {roomCode && <InviteButton code={roomCode} />}
 
       <span className="hidden h-6 w-px bg-emerald-600/60 sm:block" />
 

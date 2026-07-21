@@ -33,6 +33,9 @@ interface GameContextValue {
   /** True when this client is watching, not seated in the current round --
    * no hand is "yours" (humanSeat is -1) and nothing is interactive. */
   isSpectator?: boolean;
+  /** The room's invite code, present only in online play -- lets in-game UI
+   * offer an invite (code + QR) so a friend can join mid-match. */
+  roomCode?: string;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
