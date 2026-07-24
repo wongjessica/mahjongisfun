@@ -31,14 +31,11 @@ describe("HK settlement wallet", () => {
     for (const seat of [0, 1, 2, 3]) expect(earningsForRound(state, seat)).toBe(0);
   });
 
-  it("multiple winners off one discard each collect from the discarder", () => {
-    const state = endedState([
-      { seat: 1, fan: 3, selfDraw: false, fromSeat: 0 },
-      { seat: 2, fan: 4, selfDraw: false, fromSeat: 0 },
-    ]);
-    expect(earningsForRound(state, 0)).toBe(-70);
+  it("a single discard winner collects only from the discarder", () => {
+    const state = endedState([{ seat: 1, fan: 3, selfDraw: false, fromSeat: 0 }]);
+    expect(earningsForRound(state, 0)).toBe(-30);
     expect(earningsForRound(state, 1)).toBe(30);
-    expect(earningsForRound(state, 2)).toBe(40);
+    expect(earningsForRound(state, 2)).toBe(0);
     expect(earningsForRound(state, 3)).toBe(0);
   });
 });

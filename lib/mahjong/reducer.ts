@@ -562,7 +562,11 @@ function resolveCallWindow(
     .map(([seat]) => Number(seat));
 
   if (winnerSeats.length > 0) {
-    return applyDiscardWins(state, winnerSeats, discardingSeat, discard, winOnly);
+    // Hong Kong rule: only one player can win off a discard. When several
+    // could, priority ("head bump") goes to whoever is soonest in the turn
+    // queue after the discarder -- i.e. closest going around the table.
+    const winner = closestToDiscarder(winnerSeats, discardingSeat);
+    return applyDiscardWins(state, [winner], discardingSeat, discard, winOnly);
   }
 
   if (!winOnly) {
@@ -602,11 +606,12 @@ function handleCallResponse(
   const next: GameState = { ...state, pendingCallWindow: { ...window, responses } };
 
   // A declared win outranks pon/chi/kong, so once it's in we only keep the
-  // window open for OTHER seats that could also win off this tile (the
-  // standard multi-winner case) -- never for pon/chi responders, and never
-  // for a slow/disconnected seat that couldn't win anyway. This is what
-  // makes a declared win resolve promptly instead of hanging until every
-  // eligible seat has clicked through.
+  // window open for OTHER seats that could ALSO win off this tile -- because
+  // only one player may win (head-bump priority), and a seat sitting closer
+  // to the discarder would outrank this one. We never wait on pon/chi
+  // responders, nor on a slow/disconnected seat that couldn't win anyway.
+  // This is what makes a declared win resolve promptly instead of hanging
+  // until every eligible seat has clicked through.
   if (response.type === "win") {
     const stillCouldWin = window.eligibleSeats.some(
       (s) =>

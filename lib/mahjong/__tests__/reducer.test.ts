@@ -94,7 +94,7 @@ describe("mahjongReducer call priority", () => {
     expect(legal.some((a) => a.type === "PASS")).toBe(true);
   });
 
-  it("recognizes multiple simultaneous winners off the same discard", () => {
+  it("awards a discard both players can win to the one soonest in turn order (head bump)", () => {
     const discard = t("characters", 5);
     const player1Hand = [
       t("characters", 1),
@@ -140,14 +140,17 @@ describe("mahjongReducer call priority", () => {
     state = withPlayer(state, 1, { concealedTiles: player1Hand });
     state = withPlayer(state, 2, { concealedTiles: player2Hand });
 
-    state = mahjongReducer(state, { type: "DECLARE_WIN", seat: 1 });
+    // Seat 2 declares first, but seat 1 sits closer to the discarder (seat 0)
+    // in turn order, so priority goes to seat 1 -- and only one player wins.
     state = mahjongReducer(state, { type: "DECLARE_WIN", seat: 2 });
+    state = mahjongReducer(state, { type: "DECLARE_WIN", seat: 1 });
 
     expect(state.turn.phase).toBe("round-ended");
-    expect(state.winners).toHaveLength(2);
-    expect(state.winners!.map((w) => w.seat).sort()).toEqual([1, 2]);
-    // The discarder pays both winners.
+    expect(state.winners).toHaveLength(1);
+    expect(state.winners![0].seat).toBe(1);
+    // The discarder pays the single winner; seat 2 gets nothing.
     expect(state.players[0].score).toBeLessThan(0);
+    expect(state.players[2].score).toBe(0);
   });
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
 import { SoundToggle } from "@/components/SoundToggle";
 import { InviteButton } from "@/components/online/InviteButton";
@@ -53,41 +53,36 @@ export function CenterTable() {
 
       <span className="hidden h-6 w-px bg-emerald-600/60 sm:block" />
 
+      {/* Keyed on the tile id (no AnimatePresence): the moment the game state
+          moves to a new discard, React swaps to it immediately. Using
+          AnimatePresence with mode="wait" here caused the callout to lag a
+          full exit animation behind the real state in fast mode -- so a pon
+          prompt could appear while this still showed the previous discard. */}
       <span className="flex h-11 items-center">
-        <AnimatePresence mode="wait">
-          {lastDiscard ? (
-            <motion.span
-              key={lastDiscard.tile.id}
-              initial={{ opacity: 0, scale: 0.7, y: -6 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ type: "spring", stiffness: 400, damping: 26 }}
-              className="flex items-center gap-2"
-            >
-              <span className="text-[11px] font-medium text-emerald-100/90">
-                {anonymousDiscards
-                  ? "Someone"
-                  : lastDiscard.seat === humanSeat
-                    ? "You"
-                    : botNames[lastDiscard.seat]}{" "}
-                discarded
-              </span>
-              <TileFace tile={lastDiscard.tile} size="sm" animateIn={false} />
-              <span className="text-[11px] font-semibold text-amber-300">
-                {tileLabel(lastDiscard.tile)}
-              </span>
-            </motion.span>
-          ) : (
-            <motion.span
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-xs text-emerald-200/60"
-            >
-              Waiting for the first discard…
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {lastDiscard ? (
+          <motion.span
+            key={lastDiscard.tile.id}
+            initial={{ opacity: 0, scale: 0.7, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 26 }}
+            className="flex items-center gap-2"
+          >
+            <span className="text-[11px] font-medium text-emerald-100/90">
+              {anonymousDiscards
+                ? "Someone"
+                : lastDiscard.seat === humanSeat
+                  ? "You"
+                  : botNames[lastDiscard.seat]}{" "}
+              discarded
+            </span>
+            <TileFace tile={lastDiscard.tile} size="sm" animateIn={false} />
+            <span className="text-[11px] font-semibold text-amber-300">
+              {tileLabel(lastDiscard.tile)}
+            </span>
+          </motion.span>
+        ) : (
+          <span className="text-xs text-emerald-200/60">Waiting for the first discard…</span>
+        )}
       </span>
     </div>
   );
