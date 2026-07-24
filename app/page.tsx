@@ -76,6 +76,19 @@ export default function Home() {
   if (!initialState || !matchConfig) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] p-4">
+        <Link
+          href="/learn"
+          className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-emerald-300/50 bg-gradient-to-br from-emerald-500/20 to-emerald-700/20 px-5 py-3 text-left transition-colors hover:from-emerald-500/30 hover:to-emerald-700/30"
+        >
+          <span className="text-2xl">🀄</span>
+          <span className="flex flex-col">
+            <span className="text-sm font-bold text-emerald-100">New to mahjong? Learn to Play</span>
+            <span className="text-xs text-emerald-200/70">
+              A 5-minute tutorial, then a coached game vs bots
+            </span>
+          </span>
+          <span className="ml-auto text-emerald-200/70">→</span>
+        </Link>
         <SetupForm onStart={startGame} onPlayOnline={() => setMode("online")} />
         <Link
           href="/beta"

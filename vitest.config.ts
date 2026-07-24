@@ -3,7 +3,7 @@ import path from "path";
 
 export default defineConfig({
   test: {
-    include: ["lib/mahjong/**/*.test.ts"],
+    include: ["lib/**/*.test.ts"],
   },
   resolve: {
     alias: {
