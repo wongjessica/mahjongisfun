@@ -207,8 +207,10 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         </div>
       </div>
 
-      {/* Top-right: sound + menu */}
-      <div className="absolute right-3 top-2 z-10 flex items-center gap-1">
+      {/* Top-right: sound + menu. z-40 so the open dropdown floats above the
+          opponents' discard columns (z-10) and the call buttons (z-20) instead
+          of being painted over by the right-side tiles. */}
+      <div className="absolute right-3 top-2 z-40 flex items-center gap-1">
         <SoundToggle className="bg-black/30 text-emerald-100 hover:bg-black/50" />
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -217,6 +219,13 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         >
           ☰
         </button>
+        {menuOpen && (
+          <button
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 z-[-1] cursor-default"
+          />
+        )}
         {menuOpen && (
           <div className="absolute right-0 top-10 flex flex-col rounded-xl border border-emerald-900 bg-emerald-950/95 p-1 text-sm shadow-xl">
             <button onClick={onNewMatch} className="rounded-lg px-4 py-2 text-left text-emerald-100 hover:bg-emerald-900">
