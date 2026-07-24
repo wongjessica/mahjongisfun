@@ -9,11 +9,37 @@ import { DOLLARS_PER_FAN } from "@/lib/wallet";
 
 const MAX_SHOWN = 5;
 
+/** Encouraging, accurate status for a wait tile. We never tell a beginner a
+ * tile was "impossible" -- a copy in someone's hand just means it couldn't be
+ * self-drawn; a win off their discard was still on the table. */
+function waitStatus(wait: WaitInfo): { live: boolean; text: string } {
+  if (wait.copiesInWall > 0) {
+    const n = wait.copiesInWall;
+    return { live: true, text: `✅ ${n} still in the wall — you could have drawn it, or claimed it if someone discarded it.` };
+  }
+  const held = wait.copiesHeldByOthers;
+  const discarded = wait.copiesDiscarded;
+  const were = (n: number) => (n === 1 ? "was" : "were");
+  if (held > 0 && discarded === 0) {
+    return {
+      live: false,
+      text: `🀄 The last ${held} ${were(held)} in other players' hands — you couldn't have drawn one yourself, but you'd have won the moment one of them discarded it.`,
+    };
+  }
+  if (discarded > 0 && held === 0) {
+    return {
+      live: false,
+      text: `⏳ All ${discarded} had already been discarded — a tile can only be claimed the instant it's thrown, so being ready a little sooner would've caught it.`,
+    };
+  }
+  return {
+    live: false,
+    text: `🀄 None were left in the wall to draw — ${discarded} had been discarded and ${held} sat in other hands — but a win was still on if one of those got discarded.`,
+  };
+}
+
 function WaitCard({ wait }: { wait: WaitInfo }) {
-  const live = wait.copiesInWall > 0;
-  const gone: string[] = [];
-  if (wait.copiesDiscarded > 0) gone.push(`${wait.copiesDiscarded} discarded`);
-  if (wait.copiesHeldByOthers > 0) gone.push(`${wait.copiesHeldByOthers} in other hands`);
+  const status = waitStatus(wait);
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-white p-2.5">
@@ -28,10 +54,8 @@ function WaitCard({ wait }: { wait: WaitInfo }) {
         {wait.patterns.length > 0 && (
           <p className="truncate text-[11px] text-gray-500">{wait.patterns.join(" · ")}</p>
         )}
-        <p className={`text-[11px] font-medium ${live ? "text-emerald-700" : "text-red-600"}`}>
-          {live
-            ? `✅ ${wait.copiesInWall} still out there — you could have drawn or claimed it`
-            : `❌ all gone (${gone.join(", ")}) — this one was impossible to complete`}
+        <p className={`text-[11px] font-medium ${status.live ? "text-emerald-700" : "text-amber-700"}`}>
+          {status.text}
         </p>
       </div>
     </div>
