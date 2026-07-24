@@ -9,7 +9,9 @@ import { TileFace, tileLabel } from "@/components/tiles/TileFace";
 const btnBase =
   "flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.96]";
 const btnSecondary = `${btnBase} bg-gradient-to-b from-amber-400 to-amber-500 text-white shadow-amber-900/20 hover:from-amber-400 hover:to-amber-600`;
-const btnWin = `${btnBase} bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-emerald-900/30 hover:from-emerald-400 hover:to-emerald-600`;
+// The winning move: bigger, bolder, ringed and (below) pulsing with a glow,
+// so a player -- especially a beginner -- can't miss that they can win.
+const btnWin = `${btnBase} bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 py-3 text-base font-extrabold text-white ring-2 ring-emerald-200 hover:from-emerald-400 hover:to-emerald-600`;
 const btnGhost = `${btnBase} border border-slate-300 bg-white text-slate-600 hover:bg-slate-50`;
 
 interface ActionBarProps {
@@ -98,12 +100,21 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
       )}
       {winAction && (
         <motion.button
-          whileHover={{ scale: 1.03 }}
+          animate={{
+            scale: [1, 1.07, 1],
+            boxShadow: [
+              "0 0 0 0 rgba(16,185,129,0.5)",
+              "0 0 24px 7px rgba(16,185,129,0.85)",
+              "0 0 0 0 rgba(16,185,129,0.5)",
+            ],
+          }}
+          transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+          whileHover={{ scale: 1.12 }}
           whileTap={{ scale: 0.95 }}
           className={btnWin}
           onClick={() => dispatchAction(winAction)}
         >
-          🏆 Declare Win
+          🏆 Declare Win!
         </motion.button>
       )}
       {ponAction && (
