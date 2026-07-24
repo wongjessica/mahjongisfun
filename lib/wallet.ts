@@ -34,7 +34,7 @@ export function setBalance(kind: WalletKind, amount: number): number {
 }
 
 /** Dollars per fan -- a 5-fan hand moves $50 per paying player. */
-const DOLLARS_PER_FAN = 10;
+export const DOLLARS_PER_FAN = 10;
 
 /** What a finished round actually moves for the player at `seat`, per the
  * traditional HK settlement (this deliberately mirrors the engine's own

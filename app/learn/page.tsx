@@ -8,6 +8,7 @@ import { GameProvider } from "@/components/game/GameContext";
 import { assignBotNames } from "@/components/game/botNames";
 import { LessonView } from "@/components/tutorial/LessonView";
 import { TutorialCoach } from "@/components/tutorial/TutorialCoach";
+import { TutorialPostmortem } from "@/components/tutorial/TutorialPostmortem";
 import { createInitialState } from "@/lib/mahjong/reducer";
 import { GameState, Wind } from "@/lib/mahjong/state";
 import { markTutorialComplete } from "@/lib/tutorial/progress";
@@ -79,6 +80,7 @@ export default function LearnPage() {
           icons={{ [HUMAN_SEAT]: "🎓" }}
         >
           <TutorialCoach />
+          <TutorialPostmortem />
           <GameBoard onNextRound={startNextRound} onNewMatch={() => router.push("/")} />
         </GameProvider>
       </main>
