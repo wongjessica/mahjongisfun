@@ -60,6 +60,15 @@ export default function LearnPage() {
   if (stage === "practice" && initialState) {
     return (
       <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)]">
+        {/* Always-visible escape hatch: at z-50 it sits above the round-end
+            overlay (z-40) too, so a player who already knows how to play is
+            never stuck in the tutorial -- one tap drops them into the real app. */}
+        <button
+          onClick={() => router.push("/")}
+          className="fixed left-2 top-2 z-50 rounded-full border border-emerald-300/50 bg-emerald-950/70 px-3 py-1.5 text-xs font-semibold text-emerald-100 shadow-lg backdrop-blur hover:bg-emerald-900/80"
+        >
+          ✕ Exit to full game
+        </button>
         <GameProvider
           key={gameKey}
           initialState={initialState}

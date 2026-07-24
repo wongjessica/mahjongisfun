@@ -22,14 +22,14 @@ export function coachHint(
 ): CoachHint | null {
   if (state.turn.phase === "round-ended") {
     if (state.winners?.some((w) => w.seat === humanSeat)) {
-      return { id: "won", tone: "celebrate", text: "🎉 You won! Scroll the results to see exactly how your hand scored, then play on." };
+      return { id: "won", tone: "celebrate", text: "🎉 You won! Scroll the results to see how your hand scored. Play another round, or tap “Exit to full game” anytime to play for real." };
     }
     if (state.isDraw) {
-      return { id: "draw", tone: "info", text: "The wall ran out before anyone finished — that's a draw. Start a new round and try again." };
+      return { id: "draw", tone: "info", text: "The wall ran out before anyone finished — that's a draw. Start a new round to keep practising, or tap “Exit to full game” (top-left) to jump into a real game vs bots." };
     }
     const winner = state.winners?.[0];
     const who = winner ? nameForSeat(winner.seat) : "Someone";
-    return { id: "lost", tone: "info", text: `${who} completed their hand this time. Peek at the results to see what they built, then start a new round.` };
+    return { id: "lost", tone: "info", text: `${who} completed their hand this time. Start a new round to try again, or tap “Exit to full game” (top-left) whenever you're ready to play for real.` };
   }
 
   const legal = getLegalActions(state, humanSeat);

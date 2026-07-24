@@ -49,7 +49,7 @@ export function TutorialCoach() {
     <motion.div
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed left-1/2 top-2 z-40 w-[calc(100%-1rem)] max-w-md -translate-x-1/2"
+      className="fixed left-1/2 top-14 z-40 w-[calc(100%-1rem)] max-w-md -translate-x-1/2"
     >
       <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200 bg-white/95 p-3 shadow-xl backdrop-blur">
         <div className="flex items-start gap-2.5">
