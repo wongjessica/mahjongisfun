@@ -265,23 +265,6 @@ export const LESSONS: Lesson[] = [
         ],
         callout: "Slowly, draw by draw, you trade away useless tiles and collect the ones that build your 4 sets + 1 pair.",
       },
-      {
-        kind: "quiz",
-        title: "Which tile would you throw?",
-        prompt:
-          "Your hand already has 2-3-4 Dots, 6-7-8 Dots, Red Dragon triplet, and a pair of East. You just drew a lone White Dragon. Which tile is the safest to discard?",
-        groups: [
-          { label: "Your sets", tiles: [tt("dots", 2), tt("dots", 3), tt("dots", 4), tt("dots", 6), tt("dots", 7), tt("dots", 8)] },
-          { label: "Just drew", tiles: [tt("dragons", 3)] },
-        ],
-        options: [
-          { label: "The lone White Dragon", tiles: [tt("dragons", 3)], correct: true },
-          { label: "A tile from a finished set", tiles: [tt("dots", 3)] },
-          { label: "One of your East pair", tiles: [tt("winds", 1)] },
-        ],
-        explanation:
-          "The White Dragon isn't part of any set and doesn't connect to anything — throw it. Never break up a finished set or your pair.",
-      },
     ],
   },
   {
