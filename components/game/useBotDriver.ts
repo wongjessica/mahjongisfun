@@ -7,7 +7,7 @@ import { getLegalActions } from "@/lib/mahjong/reducer";
 import { GameState } from "@/lib/mahjong/state";
 import { useGame } from "./GameContext";
 
-const BOT_DELAY_MS = { fast: 120, slow: 550 } as const;
+const BOT_DELAY_MS = { fast: 120, slow: 550, learn: 1400 } as const;
 
 /** The driven seat (if any) that currently has an action pending -- the same
  * seat useBotDriver is about to act for. Exposed so the UI can show a

@@ -125,7 +125,7 @@ interface TileFaceProps {
   /** Fast: snappier, near-instant. Slow: gentler, more "immersive" spring.
    * Defaults to "slow" so callers outside a game (e.g. the setup screen's
    * decorative tiles) keep the original cinematic feel. */
-  speed?: "fast" | "slow";
+  speed?: "fast" | "slow" | "learn";
   /** Seconds to delay the entrance animation (not layout repositioning) --
    * used to stagger the initial deal one tile at a time in slow mode. */
   enterDelay?: number;
@@ -147,7 +147,9 @@ export function TileFace({
   enterDelay = 0,
 }: TileFaceProps) {
   const isBack = faceDown || !tile;
-  const spring = SPEED_SPRING[speed];
+  // The tutorial's "learn" pace only slows bots, not tile animations -- map it
+  // to the gentle "slow" spring here.
+  const spring = SPEED_SPRING[speed === "fast" ? "fast" : "slow"];
 
   // Only a genuinely clickable tile should be a <button> -- a decorative
   // tile (e.g. composited into the ActionBar's discard preview button) must

@@ -49,7 +49,10 @@ export function TutorialCoach() {
     <motion.div
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed left-1/2 top-14 z-40 w-[calc(100%-1rem)] max-w-md -translate-x-1/2"
+      /* Centered via left/right insets + mx-auto, NOT -translate-x-1/2: the
+         framer `y` animation writes `transform`, which would wipe out a
+         Tailwind translate and shove the card off the right edge. */
+      className="fixed inset-x-2 top-14 z-40 mx-auto max-w-md"
     >
       <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200 bg-white/95 p-3 shadow-xl backdrop-blur">
         <div className="flex items-start gap-2.5">

@@ -10,7 +10,10 @@ import { AccountPanel } from "@/components/profile/AccountPanel";
 import { useProfile } from "@/components/profile/ProfileContext";
 import { FanMinimum } from "@/lib/mahjong/scoring/ruleset";
 
-export type GameSpeed = "fast" | "slow";
+// "learn" is a slower-than-slow pace used only by the tutorial's practice
+// game, so a beginner can follow each bot's move. The setup UI only offers
+// fast/slow.
+export type GameSpeed = "fast" | "slow" | "learn";
 
 export interface SetupConfig {
   fanMinimum: FanMinimum;

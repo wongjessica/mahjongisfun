@@ -8,6 +8,7 @@ import { useBotDriver } from "@/components/game/useBotDriver";
 import { useGameSounds } from "@/components/game/useGameSounds";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
 import { SoundToggle } from "@/components/SoundToggle";
+import { FullscreenButton } from "@/components/beta/FullscreenButton";
 import { DiceRoll } from "@/components/board/DiceRoll";
 import { RoundEndOverlay } from "@/components/board/WinnerBanner";
 import { TileFace, tileLabel } from "@/components/tiles/TileFace";
@@ -169,11 +170,16 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         </div>
       );
     }
+    // Overlap the backs into a compact stack so a 13-tile hand stays small on
+    // a phone (a full non-overlapped row/column is what was shoving the call
+    // buttons off the table).
     return (
-      <div className={vertical ? "flex flex-col gap-px" : "flex gap-px"}>
-        {Array.from({ length: p.concealedTiles.length }).map((_, i) =>
-          vertical ? <Back key={i} w={28} h={19} /> : <Back key={i} w={19} h={28} />
-        )}
+      <div className={vertical ? "flex flex-col" : "flex"}>
+        {Array.from({ length: p.concealedTiles.length }).map((_, i) => (
+          <div key={i} style={vertical ? { marginTop: i ? -11 : 0 } : { marginLeft: i ? -9 : 0 }}>
+            {vertical ? <Back w={26} h={18} /> : <Back w={18} h={26} />}
+          </div>
+        ))}
       </div>
     );
   }
@@ -250,7 +256,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
     return (
       <div
         className={`flex flex-wrap content-start gap-0.5 rounded-lg border p-1 ${POND_TINT[accentOf(seat)]} ${
-          wide ? "min-h-[52px] min-w-[124px] max-w-[208px]" : "min-h-[110px] min-w-[64px] max-w-[70px]"
+          wide ? "min-h-[40px] min-w-[124px] max-w-[208px]" : "min-h-[80px] min-w-[64px] max-w-[70px]"
         }`}
       >
         {p.discards.map((t) => (
@@ -304,6 +310,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
       {/* Top-right: sound + menu (z-40 so its dropdown floats over the table). */}
       <div className="absolute right-3 top-2 z-40 flex items-center gap-1">
         <SoundToggle className="bg-black/30 text-emerald-100 hover:bg-black/50" />
+        <FullscreenButton className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-emerald-100 hover:bg-black/50" />
         <button
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Menu"
@@ -331,8 +338,10 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         <Station seat={top} orient="top" />
       </div>
 
-      {/* Band 2: left station | pond | right station */}
-      <div className="flex min-h-0 flex-1 items-center justify-between gap-1 px-1">
+      {/* Band 2: left station | pond | right station. overflow-hidden so a
+          tall table clips WITHIN this band instead of spilling down over the
+          call buttons and hand. */}
+      <div className="flex min-h-0 flex-1 items-center justify-between gap-1 overflow-hidden px-1">
         <Station seat={left} orient="left" />
 
         <div className="grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] place-items-center gap-1.5">
@@ -350,8 +359,9 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         <Station seat={right} orient="right" />
       </div>
 
-      {/* Band 3: your area -- badge/bonuses, calls, hint, then the racked hand */}
-      <div className="flex flex-col items-center gap-1 px-2 pb-2">
+      {/* Band 3: your area -- badge/bonuses, calls, hint, then the racked hand.
+          relative z-10 keeps it above the table band no matter what. */}
+      <div className="relative z-10 flex flex-col items-center gap-1 px-2 pb-2">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Badge seat={humanSeat} />
           <Bonuses seat={humanSeat} />
@@ -384,7 +394,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
               )}
               {ponAction && (
                 <button onClick={() => act(ponAction)} className="rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-4 py-2 text-sm font-bold text-white shadow">
-                  Pon
+                  Pong
                 </button>
               )}
               {kongActions.map((a, i) => (

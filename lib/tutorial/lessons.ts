@@ -274,16 +274,16 @@ export const LESSONS: Lesson[] = [
     steps: [
       {
         kind: "info",
-        title: "Pon, Chi & Kong",
+        title: "Pong, Chi & Kong",
         body: [
           "When another player discards a tile you can use, you may “call” it instead of waiting to draw it yourself:",
-          "• Pon — take a discard to complete a Triplet (you must already hold a matching pair). Anyone can Pon.",
+          "• Pong — take a discard to complete a Triplet (you must already hold a matching pair). Anyone can Pong.",
           "• Chi — take a discard to complete a Run. Only allowed from the player directly to your left.",
           "• Kong — take a discard to make four-of-a-kind. You then draw a bonus replacement tile.",
         ],
         groups: [
           { label: "Hold a pair…", tiles: [tt("bamboo", 5), tt("bamboo", 5)] },
-          { label: "…Pon this discard", tiles: [tt("bamboo", 5)] },
+          { label: "…Pong this discard", tiles: [tt("bamboo", 5)] },
         ],
       },
       {
@@ -305,12 +305,12 @@ export const LESSONS: Lesson[] = [
           { label: "Discarded", tiles: [tt("bamboo", 5)] },
         ],
         options: [
-          { label: "Pon it to make a triplet", correct: true },
+          { label: "Pong it to make a triplet", correct: true },
           { label: "Chi it (it's not the player on your left)" },
           { label: "Nothing — you can't use it" },
         ],
         explanation:
-          "A matching pair + the discard = a Pon (triplet), and Pon works from any player. Chi would only be allowed from the player on your left.",
+          "A matching pair + the discard = a Pong (triplet), and Pong works from any player. Chi would only be allowed from the player on your left.",
       },
     ],
   },

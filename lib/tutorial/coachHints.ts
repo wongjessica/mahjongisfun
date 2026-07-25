@@ -42,7 +42,7 @@ export function coachHint(
   const inCallWindow = state.turn.phase === "awaiting-call-responses";
   if (inCallWindow && (types.has("CALL_PON") || types.has("CALL_CHI") || types.has("CALL_KONG_EXPOSED"))) {
     const calls: string[] = [];
-    if (types.has("CALL_PON")) calls.push("Pon (make a triplet)");
+    if (types.has("CALL_PON")) calls.push("Pong (make a triplet)");
     if (types.has("CALL_CHI")) calls.push("Chi (make a run)");
     if (types.has("CALL_KONG_EXPOSED")) calls.push("Kong (all four)");
     return {
@@ -74,7 +74,9 @@ export function coachHint(
 
   const active = state.turn.activeSeat;
   if (active !== humanSeat) {
-    return { id: `watch-${active}`, tone: "info", text: `${nameForSeat(active)} is playing. Watch their discard — you might be able to claim it, and you're up soon.` };
+    // Stable id ("watch", not "watch-<seat>") so the message updates in place
+    // as play goes around instead of re-animating on every bot's turn.
+    return { id: "watch", tone: "info", text: `${nameForSeat(active)} is playing. Watch their discard — you might be able to claim it, and you're up soon.` };
   }
 
   return null;

@@ -5,7 +5,7 @@ import { toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 import { useGame } from "./GameContext";
 
-const AUTO_DRAW_DELAY_MS = { fast: 60, slow: 200 } as const;
+const AUTO_DRAW_DELAY_MS = { fast: 60, slow: 200, learn: 350 } as const;
 
 /** Drawing (and revealing/replacing a flower) isn't a real decision in
  * mahjong -- you always do it on your turn, there's no choice involved.

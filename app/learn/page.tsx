@@ -75,7 +75,7 @@ export default function LearnPage() {
           initialState={initialState}
           humanSeat={HUMAN_SEAT}
           anonymousDiscards={false}
-          speed="slow"
+          speed="learn"
           botNames={botNames}
           icons={{ [HUMAN_SEAT]: "🎓" }}
         >

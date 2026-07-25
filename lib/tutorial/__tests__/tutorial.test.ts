@@ -72,7 +72,8 @@ describe("coachHint", () => {
     const state = createInitialState({ fanMinimum: 0, seed: 1, humanSeat: 0, dealerIndex: 0 });
     // Seat 0 is the dealer -> it's their turn to discard the 14th tile.
     expect(coachHint(state, 0, name)?.id).toBe("discard");
-    // From a non-active seat's perspective, the coach says to watch seat 0.
-    expect(coachHint(state, 1, name)?.id).toBe("watch-0");
+    // From a non-active seat's perspective, the coach says to watch (stable id
+    // so it doesn't re-animate every time play moves to a different bot).
+    expect(coachHint(state, 1, name)?.id).toBe("watch");
   });
 });

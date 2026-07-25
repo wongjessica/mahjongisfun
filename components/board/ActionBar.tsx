@@ -124,7 +124,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           className={btnSecondary}
           onClick={() => dispatchAction(ponAction)}
         >
-          Pon
+          Pong
         </motion.button>
       )}
       {kongActions.map((action, i) => (
