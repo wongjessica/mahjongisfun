@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TileFace } from "@/components/tiles/TileFace";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
 import { RulesModal } from "@/components/setup/RulesModal";
 import { SoundToggle } from "@/components/SoundToggle";
@@ -84,6 +86,7 @@ export function SetupForm({
   const [speed, setSpeed] = useState<GameSpeed>("slow");
   const [icon, setIcon] = useState("🙂");
   const { profile } = useProfile();
+  const { t } = useLang();
   const wallet = profile.wallet;
   // localStorage isn't available during prerender -- load the icon on mount.
   useEffect(() => {
@@ -99,6 +102,7 @@ export function SetupForm({
     >
       <RulesModal />
       <SoundToggle className="absolute left-3 top-3 border-2 border-slate-200 text-slate-500 hover:border-slate-300" />
+      <LanguageToggle variant="light" className="absolute right-3 top-3" />
       <div className="flex justify-center gap-1.5">
         {DECORATIVE_TILES.map((tile, i) => (
           <motion.div
@@ -113,14 +117,14 @@ export function SetupForm({
       </div>
 
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900">Hong Kong Mahjong</h1>
-        <p className="mt-1 text-sm text-slate-500">Solo play against 3 intermediate bots.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("home.title")}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t("setup.subtitle")}</p>
         <div className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold">
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
-            🤖 Solo ${wallet.solo.toLocaleString()}
+            🤖 {t("setup.chipSolo")} ${wallet.solo.toLocaleString()}
           </span>
           <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
-            👥 Online ${wallet.online.toLocaleString()}
+            👥 {t("setup.chipOnline")} ${wallet.online.toLocaleString()}
           </span>
         </div>
       </div>
@@ -136,7 +140,7 @@ export function SetupForm({
       />
 
       <div>
-        <span className="block text-sm font-medium text-slate-700">Win minimum</span>
+        <span className="block text-sm font-medium text-slate-700">{t("setup.fanMin")}</span>
         <div className="mt-2 flex gap-2">
           {([0, 3, 5] as const).map((min) => (
             <button
@@ -145,35 +149,36 @@ export function SetupForm({
               onClick={() => setFanMinimum(min)}
               className={`${optionBase} ${fanMinimum === min ? optionActive : optionInactive}`}
             >
-              {min}-fan{min === 5 ? " 🔥" : ""}
+              {min === 0 ? t("setup.fan.any") : t("setup.fan.n", { n: min })}
+              {min === 5 ? " 🔥" : ""}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <span className="block text-sm font-medium text-slate-700">Game speed</span>
+        <span className="block text-sm font-medium text-slate-700">{t("setup.speed")}</span>
         <div className="mt-2 flex gap-2">
           <button
             type="button"
             onClick={() => setSpeed("fast")}
             className={`${optionBase} ${speed === "fast" ? optionActive : optionInactive}`}
           >
-            ⚡ Fast
+            ⚡ {t("setup.speed.fast")}
           </button>
           <button
             type="button"
             onClick={() => setSpeed("slow")}
             className={`${optionBase} ${speed === "slow" ? optionActive : optionInactive}`}
           >
-            🎬 Immersive
+            🎬 {t("setup.speed.slow")}
           </button>
         </div>
       </div>
 
       <ToggleRow
-        label="Show who discarded"
-        hint="Off: all discards mix into one anonymous pile"
+        label={t("setup.showDiscarder")}
+        hint={t("setup.showDiscarder.hint")}
         checked={!anonymousDiscards}
         onChange={(checked) => setAnonymousDiscards(!checked)}
       />
@@ -185,7 +190,7 @@ export function SetupForm({
         onClick={() => onStart({ fanMinimum, seed: Date.now(), anonymousDiscards, speed, icon })}
         className="rounded-xl bg-emerald-700 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-800"
       >
-        Start Game
+        {t("setup.start")}
       </motion.button>
 
       {onPlayOnline && (
@@ -194,7 +199,7 @@ export function SetupForm({
           onClick={onPlayOnline}
           className="rounded-xl border-2 border-emerald-600 px-4 py-3 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
         >
-          👥 Play with Friends
+          👥 {t("setup.online")}
         </button>
       )}
     </motion.div>

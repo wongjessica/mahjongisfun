@@ -3,8 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { tileName, windShort } from "@/lib/i18n/labels";
 import { GameSpeed } from "@/components/setup/SetupForm";
-import { TileFace, TileSize, tileLabel } from "@/components/tiles/TileFace";
+import { TileFace, TileSize } from "@/components/tiles/TileFace";
 import { Meld } from "@/lib/mahjong/melds";
 import { sortTiles } from "@/lib/mahjong/tiles";
 
@@ -16,8 +18,6 @@ const WIND_AVATAR: Record<number, string> = {
   3: "bg-sky-500",
   4: "bg-violet-500",
 };
-
-const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
 // Same color as the matching WIND_AVATAR above, just as a light-tinted badge
 // instead of a solid fill -- ties the avatar's color coding to an actual
@@ -47,20 +47,26 @@ function Avatar({ seatWind, label }: { seatWind: number; label: string }) {
  * "to your left" in this layout) -- explicit rather than left as an exercise
  * in turn-order arithmetic. */
 function PositionBadge({ position }: { position: SeatPosition }) {
+  const { t } = useLang();
   if (position === "left") {
     return (
       <span className="rounded bg-sky-100 px-1 py-0.5 text-[10px] font-bold text-sky-700">
-        ← chi from here
+        {t("panel.chiFromHere")}
       </span>
     );
   }
-  return <span className="text-[10px] font-medium text-slate-400">{position}</span>;
+  return (
+    <span className="text-[10px] font-medium text-slate-400">
+      {t(position === "across" ? "panel.across" : "panel.right")}
+    </span>
+  );
 }
 
 /** A compact "N tiles in hand" indicator for opponents -- showing a full
  * row of face-down tile backs wastes space that the discard pile (the
  * thing you actually need to read to count tiles) needs more. */
 function HandCount({ count }: { count: number }) {
+  const { t } = useLang();
   return (
     <div className="flex items-center gap-1.5 text-slate-500">
       <div className="relative h-6 w-8">
@@ -76,7 +82,7 @@ function HandCount({ count }: { count: number }) {
           />
         ))}
       </div>
-      <span className="text-xs font-semibold">{count} in hand</span>
+      <span className="text-xs font-semibold">{t("panel.inHand", { n: count })}</span>
     </div>
   );
 }
@@ -118,6 +124,7 @@ export function PlayerPanel({
   position,
 }: PlayerPanelProps) {
   const { state, speed, botNames, icons } = useGame();
+  const { lang, t } = useLang();
   const player = state.players[seat];
   const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
   const isDealer = state.dealerIndex === seat;
@@ -139,7 +146,7 @@ export function PlayerPanel({
   useEffect(() => {
     isInitialDealRef.current = false;
   }, []);
-  const dealStagger = isInitialDealRef.current && speed === "slow";
+  const dealStagger = isInitialDealRef.current && speed !== "fast";
 
   return (
     <motion.div
@@ -158,15 +165,15 @@ export function PlayerPanel({
           />
           <div className="leading-tight">
             <div className="flex items-center gap-1 text-sm font-semibold text-slate-800">
-              {isHuman ? "You" : botNames[seat]}
+              {isHuman ? t("common.you") : botNames[seat]}
               <span
                 className={`rounded px-1 py-0.5 text-[10px] font-bold ${WIND_BADGE[player.seatWind]}`}
               >
-                {WIND_NAMES[player.seatWind]}
+                {windShort(player.seatWind, lang)}
               </span>
               {isDealer && (
                 <span className="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
-                  DEALER
+                  {t("panel.dealer")}
                 </span>
               )}
               {!isHuman && position && <PositionBadge position={position} />}
@@ -177,7 +184,7 @@ export function PlayerPanel({
                 animate={{ opacity: 1 }}
                 className="flex items-center gap-1 text-[11px] font-medium text-slate-400"
               >
-                thinking
+                {t("panel.thinkingWord")}
                 <motion.span
                   animate={{ opacity: [0.2, 1, 0.2] }}
                   transition={{ duration: 1.1, repeat: Infinity }}
@@ -249,7 +256,7 @@ export function PlayerPanel({
                 className="flex flex-col items-center gap-1 border-l-2 border-dashed border-amber-300 pl-3"
               >
                 <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">
-                  Drawn
+                  {t("panel.drawn")}
                 </span>
                 <TileFace
                   tile={state.lastDraw!.tile}
@@ -265,7 +272,7 @@ export function PlayerPanel({
                   speed={speed}
                 />
                 <span className="text-[9px] font-medium text-amber-700">
-                  {tileLabel(state.lastDraw!.tile)}
+                  {tileName(state.lastDraw!.tile, lang)}
                 </span>
               </motion.div>
             )}

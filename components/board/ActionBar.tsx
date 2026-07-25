@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { tileName } from "@/lib/i18n/labels";
 import { LegalAction, toGameAction } from "@/lib/mahjong/actions";
 import { getLegalActions } from "@/lib/mahjong/reducer";
-import { TileFace, tileLabel } from "@/components/tiles/TileFace";
+import { TileFace } from "@/components/tiles/TileFace";
 
 const btnBase =
   "flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.96]";
@@ -21,6 +23,7 @@ interface ActionBarProps {
 
 export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps) {
   const { state, dispatch, humanSeat } = useGame();
+  const { lang, t } = useLang();
   const legal = getLegalActions(state, humanSeat);
 
   const dispatchAction = (action: LegalAction) => {
@@ -31,7 +34,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
   if (legal.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/70 p-3 text-center text-sm text-slate-400">
-        Waiting for other players…
+        {t("action.waitingOthers")}
       </div>
     );
   }
@@ -46,7 +49,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1, repeat: Infinity }}
         />
-        Drawing…
+        {t("action.drawing")}
       </div>
     );
   }
@@ -92,9 +95,9 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           <TileFace tile={selectedTile} size="sm" animateIn={false} />
           <span className="flex flex-col items-start leading-tight">
             <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-200">
-              Discard
+              {t("action.discard")}
             </span>
-            <span className="text-sm font-bold">{tileLabel(selectedTile)}</span>
+            <span className="text-sm font-bold">{tileName(selectedTile, lang)}</span>
           </span>
         </motion.button>
       )}
@@ -114,7 +117,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           className={btnWin}
           onClick={() => dispatchAction(winAction)}
         >
-          🏆 Declare Win!
+          🏆 {t("action.win")}!
         </motion.button>
       )}
       {ponAction && (
@@ -124,7 +127,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           className={btnSecondary}
           onClick={() => dispatchAction(ponAction)}
         >
-          Pong
+          {t("action.pong")}
         </motion.button>
       )}
       {kongActions.map((action, i) => (
@@ -135,7 +138,7 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           className={btnSecondary}
           onClick={() => dispatchAction(action)}
         >
-          Kong
+          {t("action.kong")}
         </motion.button>
       ))}
       {chiActions.map((action) => {
@@ -156,10 +159,10 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
             </div>
             <span className="flex flex-col items-start leading-tight">
               <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-100">
-                Chi with
+                {t("action.chiWithLabel")}
               </span>
               <span className="text-xs font-bold">
-                {tileLabel(t1)} + {tileLabel(t2)}
+                {tileName(t1, lang)} + {tileName(t2, lang)}
               </span>
             </span>
           </motion.button>
@@ -172,11 +175,11 @@ export function ActionBar({ selectedTileId, onConsumeSelection }: ActionBarProps
           className={btnGhost}
           onClick={() => dispatchAction(passAction)}
         >
-          Pass
+          {t("action.pass")}
         </motion.button>
       )}
       {!discardForSelected && legal.some((a) => a.type === "DISCARD") && (
-        <span className="text-sm text-slate-400">Tap a tile above to discard it</span>
+        <span className="text-sm text-slate-400">{t("action.tapAbove")}</span>
       )}
     </motion.div>
   );

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useGameSounds } from "@/components/game/useGameSounds";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
@@ -43,6 +44,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
   const thinkingSeat = useBotDriver(rollingDice);
   useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat, isOnline } = useGame();
+  const { t } = useLang();
   const { recordRound } = useProfile();
   useGameSounds(state, humanSeat, rollingDice);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
@@ -215,7 +217,7 @@ export function GameBoard({ onNextRound, onNewMatch, diceSeed }: GameBoardProps)
             onClick={() => setResultsOpen(true)}
             className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-100 px-4 py-2.5 text-sm font-semibold text-amber-900 shadow-xl hover:from-amber-100 hover:to-yellow-200"
           >
-            🏆 View Results
+            🏆 {t("end.viewResults")}
           </motion.button>
         )}
       </AnimatePresence>

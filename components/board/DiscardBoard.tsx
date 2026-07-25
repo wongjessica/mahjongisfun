@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { TileFace } from "@/components/tiles/TileFace";
 import { Tile } from "@/lib/mahjong/tiles";
 import { nextSeat } from "@/lib/mahjong/state";
@@ -24,6 +25,7 @@ function hashUnit(id: string, salt: number): number {
 
 function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; isFirst: boolean }) {
   const { state, speed, botNames } = useGame();
+  const { t } = useLang();
   const player = state.players[seat];
   const lastDiscardId =
     state.lastDiscard && state.lastDiscard.seat === seat ? state.lastDiscard.tile.id : null;
@@ -34,7 +36,7 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
       <div className={`flex items-center gap-1.5 pt-1.5 ${rowBorder}`}>
         <span className={`h-2 w-2 shrink-0 rounded-full ${WIND_DOT[player.seatWind]}`} />
         <span className="truncate text-xs font-semibold text-slate-600">
-          {isHuman ? "You" : botNames[seat]}
+          {isHuman ? t("common.you") : botNames[seat]}
         </span>
       </div>
       <div
@@ -63,6 +65,7 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
 
 function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId: string | null }) {
   const { speed } = useGame();
+  const { t } = useLang();
   // Stable shuffle by id hash, so the pool looks scattered rather than
   // grouped by seat, without re-shuffling on every render.
   const scattered = [...tiles].sort((a, b) => hashUnit(a.id, 1) - hashUnit(b.id, 1));
@@ -70,7 +73,7 @@ function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId:
   return (
     <div className="flex min-h-[5rem] flex-wrap content-start items-start gap-x-1.5 gap-y-2 rounded-lg bg-gradient-to-br from-emerald-800 to-emerald-900 p-3">
       {scattered.length === 0 ? (
-        <span className="text-xs text-emerald-200/60">No discards yet</span>
+        <span className="text-xs text-emerald-200/60">{t("panel.noDiscards")}</span>
       ) : (
         <AnimatePresence>
           {scattered.map((tile) => (
@@ -101,6 +104,7 @@ function AnonymousPool({ tiles, lastDiscardId }: { tiles: Tile[]; lastDiscardId:
  * per seat); anonymous mode pools everything into one scattered table. */
 export function DiscardBoard() {
   const { state, humanSeat, anonymousDiscards } = useGame();
+  const { t } = useLang();
   // Order rows around the viewer's own seat (you first). A spectator has no
   // seat (humanSeat -1), so just show the four seats in order.
   const seatOrder =
@@ -117,7 +121,8 @@ export function DiscardBoard() {
       className="flex flex-col rounded-xl border border-white/10 bg-white/90 p-3 shadow-lg backdrop-blur-sm"
     >
       <h2 className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-        Discards {anonymousDiscards && <span className="normal-case text-slate-300">(anonymous)</span>}
+        {t("panel.discards")}{" "}
+        {anonymousDiscards && <span className="normal-case text-slate-300">{t("panel.anonymous")}</span>}
       </h2>
       {/* Sized to its actual content rather than squeezed into whatever
           leftover space the page has -- a discard pile that's genuinely

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GameBoard } from "@/components/board/GameBoard";
 import { GameProvider } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { assignBotNames } from "@/components/game/botNames";
 import { OnlineFlow } from "@/components/online/OnlineFlow";
 import { SetupConfig, SetupForm } from "@/components/setup/SetupForm";
@@ -15,6 +16,7 @@ const HUMAN_SEAT = 0;
 type MatchConfig = Pick<SetupConfig, "fanMinimum" | "anonymousDiscards" | "speed" | "icon">;
 
 export default function Home() {
+  const { t } = useLang();
   const [initialState, setInitialState] = useState<GameState | null>(null);
   const [matchConfig, setMatchConfig] = useState<MatchConfig | null>(null);
   const [mode, setMode] = useState<"solo" | "online">("solo");
@@ -82,10 +84,8 @@ export default function Home() {
         >
           <span className="text-2xl">🀄</span>
           <span className="flex flex-col">
-            <span className="text-sm font-bold text-emerald-100">New to mahjong? Learn to Play</span>
-            <span className="text-xs text-emerald-200/70">
-              A 5-minute tutorial, then a coached game vs bots
-            </span>
+            <span className="text-sm font-bold text-emerald-100">{t("home.learn.title")}</span>
+            <span className="text-xs text-emerald-200/70">{t("home.learn.subtitle")}</span>
           </span>
           <span className="ml-auto text-emerald-200/70">→</span>
         </Link>
@@ -94,7 +94,7 @@ export default function Home() {
           href="/beta"
           className="flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-950/30 px-4 py-2 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-900/40"
         >
-          🧪 Try the Beta Table <span className="text-xs font-normal text-amber-200/70">(new authentic look)</span>
+          🧪 {t("home.beta")} <span className="text-xs font-normal text-amber-200/70">{t("home.beta.tag")}</span>
         </Link>
       </main>
     );
