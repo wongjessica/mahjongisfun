@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { GameBoard } from "@/components/board/GameBoard";
 import { GameContextProvider } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { IconPicker, getSavedIcon, saveIcon } from "@/components/setup/IconPicker";
 import { useProfile } from "@/components/profile/ProfileContext";
 import { getCurrentUid } from "@/lib/profile/session";
@@ -25,10 +26,10 @@ function hashCode(input: string): number {
   return h >>> 0;
 }
 
-const JOIN_ERROR_TEXT: Record<JoinError, string> = {
-  "not-found": "No room with that code. Double-check it (codes never contain 0, O, 1, I, or L).",
-  full: "That room already has 4 players.",
-  "in-progress": "That game is in progress and every seat has a player. (If someone leaves mid-game, joining with this code takes over their seat.)",
+const JOIN_ERROR_KEY: Record<JoinError, string> = {
+  "not-found": "online.err.notFound",
+  full: "online.roomFull",
+  "in-progress": "online.err.inProgress",
 };
 
 /** Entry screen for online play: pick a name, then create a room or join
@@ -42,6 +43,7 @@ function OnlineHome({
   onEnterRoom: (code: string) => void;
   onBack: () => void;
 }) {
+  const { t } = useLang();
   const [name, setName] = useState("");
   const [code, setCode] = useState(initialCode);
   const [icon, setIcon] = useState("🙂");
@@ -64,7 +66,7 @@ function OnlineHome({
       saveIcon(icon);
       onEnterRoom(await createOnlineRoom(trimmedName, icon));
     } catch {
-      setError("Couldn't create the room. Check your connection and try again.");
+      setError(t("online.err.createFail"));
       setBusy(false);
     }
   };
@@ -78,13 +80,13 @@ function OnlineHome({
       saveIcon(icon);
       const result = await joinOnlineRoom(code, trimmedName, icon);
       if ("error" in result) {
-        setError(JOIN_ERROR_TEXT[result.error]);
+        setError(t(JOIN_ERROR_KEY[result.error]));
         setBusy(false);
       } else {
         onEnterRoom(result.code);
       }
     } catch {
-      setError("Couldn't join the room. Check your connection and try again.");
+      setError(t("online.err.joinFail"));
       setBusy(false);
     }
   };
@@ -97,19 +99,17 @@ function OnlineHome({
       className="mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
     >
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900">Play with Friends</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          2–4 players share a table; empty seats are filled by bots.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("online.title")}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t("online.subtitle")}</p>
       </div>
 
       <label className="block">
-        <span className="block text-sm font-medium text-slate-700">Your name</span>
+        <span className="block text-sm font-medium text-slate-700">{t("online.yourName")}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={14}
-          placeholder="e.g. Jess"
+          placeholder={t("online.namePlaceholder")}
           className="mt-2 w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-300 focus:border-emerald-400"
         />
       </label>
@@ -124,12 +124,12 @@ function OnlineHome({
         onClick={create}
         className="rounded-xl bg-emerald-700 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
       >
-        Create a Room
+        {t("online.createRoomBtn")}
       </motion.button>
 
       <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-300">
         <span className="h-px flex-1 bg-slate-200" />
-        or join one
+        {t("online.orJoin")}
         <span className="h-px flex-1 bg-slate-200" />
       </div>
 
@@ -139,7 +139,7 @@ function OnlineHome({
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && join()}
           maxLength={6}
-          placeholder="ROOM CODE"
+          placeholder={t("online.roomCode")}
           className="w-0 flex-1 rounded-xl border-2 border-slate-200 px-4 py-3 text-center font-mono text-lg font-bold tracking-[0.25em] text-slate-800 outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300 focus:border-emerald-400"
         />
         <button
@@ -148,14 +148,14 @@ function OnlineHome({
           onClick={join}
           className="rounded-xl border-2 border-emerald-600 px-5 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
         >
-          Join
+          {t("online.join")}
         </button>
       </div>
 
       {error && <p className="text-center text-xs font-medium text-rose-500">{error}</p>}
 
       <button onClick={onBack} className="text-xs font-medium text-slate-400 underline hover:text-slate-600">
-        ← Back to solo play
+        {t("online.backSolo")}
       </button>
     </motion.div>
   );
@@ -164,6 +164,7 @@ function OnlineHome({
 /** Inside a room: lobby until the host starts, then the live game board
  * running off the shared action log. */
 function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
+  const { t } = useLang();
   const online = useOnlineRoom(code);
   const { room, roomExists, mySeat, gameState, dispatch, driveSeats, seatNames, seatIcons, isActingHost } = online;
 
@@ -193,9 +194,9 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
     return (
       <Centered>
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white p-8 text-center shadow-2xl">
-          <p className="text-sm font-semibold text-slate-700">This room no longer exists.</p>
+          <p className="text-sm font-semibold text-slate-700">{t("online.roomGone")}</p>
           <button onClick={onExit} className="text-xs font-medium text-emerald-700 underline">
-            ← Back
+            {t("online.back")}
           </button>
         </div>
       </Centered>
@@ -211,7 +212,7 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
             animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ duration: 1, repeat: Infinity }}
           />
-          Connecting…
+          {t("online.connecting")}
         </p>
       </Centered>
     );
@@ -229,9 +230,9 @@ function RoomScreen({ code, onExit }: { code: string; onExit: () => void }) {
     return (
       <Centered>
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white p-8 text-center shadow-2xl">
-          <p className="text-sm font-semibold text-slate-700">Loading the table…</p>
+          <p className="text-sm font-semibold text-slate-700">{t("online.loadingTable")}</p>
           <button onClick={leaveAndExit} className="text-xs font-medium text-emerald-700 underline">
-            ← Back
+            {t("online.back")}
           </button>
         </div>
       </Centered>

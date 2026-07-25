@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { LeaderboardEntry } from "@/lib/firebase/profileDb";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { fanName } from "@/lib/i18n/labels";
 import { favoritePattern, winRate } from "@/lib/profile/types";
 import { useProfile } from "./ProfileContext";
 
@@ -17,6 +19,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function StatsModal({ onClose }: { onClose: () => void }) {
   const { user, profile } = useProfile();
+  const { lang, t } = useLang();
   const [board, setBoard] = useState<LeaderboardEntry[] | null>(null);
   const s = profile.stats;
   const fav = favoritePattern(s);
@@ -53,37 +56,35 @@ export function StatsModal({ onClose }: { onClose: () => void }) {
         >
           <button
             onClick={onClose}
-            aria-label="Close stats"
+            aria-label={t("stats.close")}
             className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           >
             ✕
           </button>
 
-          <h2 className="text-center text-xl font-bold text-slate-900">Your Stats</h2>
+          <h2 className="text-center text-xl font-bold text-slate-900">{t("stats.title")}</h2>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <Stat label="Hands played" value={s.handsPlayed.toLocaleString()} />
-            <Stat label="Wins" value={s.wins.toLocaleString()} />
-            <Stat label="Win rate" value={`${Math.round(winRate(s) * 100)}%`} />
-            <Stat label="Self-draws" value={s.selfDraws.toLocaleString()} />
-            <Stat label="Biggest hand" value={s.biggestFan ? `${s.biggestFan} fan` : "—"} />
-            <Stat label="Fav. pattern" value={fav ?? "—"} />
+            <Stat label={t("stats.handsPlayed")} value={s.handsPlayed.toLocaleString()} />
+            <Stat label={t("stats.wins")} value={s.wins.toLocaleString()} />
+            <Stat label={t("stats.winRate")} value={`${Math.round(winRate(s) * 100)}%`} />
+            <Stat label={t("stats.selfDraws")} value={s.selfDraws.toLocaleString()} />
+            <Stat label={t("stats.biggestHand")} value={s.biggestFan ? t("end.fan", { n: s.biggestFan }) : "—"} />
+            <Stat label={t("stats.favPattern")} value={fav ? fanName(fav, lang) : "—"} />
           </div>
           {s.biggestHand && (
-            <p className="mt-2 text-center text-xs text-slate-400">Biggest hand: {s.biggestHand}</p>
+            <p className="mt-2 text-center text-xs text-slate-400">{t("stats.biggestHandLine", { hand: s.biggestHand })}</p>
           )}
 
           <h3 className="mt-6 text-sm font-bold uppercase tracking-wide text-emerald-800">
-            Friends leaderboard · online $
+            {t("stats.leaderboardTitle")}
           </h3>
-          <p className="mb-2 text-xs text-slate-400">People you&apos;ve played online games with.</p>
+          <p className="mb-2 text-xs text-slate-400">{t("stats.leaderboardNote")}</p>
 
           {board === null ? (
-            <p className="py-3 text-center text-sm text-slate-400">Loading…</p>
+            <p className="py-3 text-center text-sm text-slate-400">{t("common.loading")}</p>
           ) : board.length <= 1 ? (
-            <p className="py-3 text-center text-sm text-slate-400">
-              Play an online game with a signed-in friend to build your leaderboard.
-            </p>
+            <p className="py-3 text-center text-sm text-slate-400">{t("stats.leaderboardEmpty")}</p>
           ) : (
             <div className="flex flex-col gap-1">
               {board.map((e, i) => (
@@ -98,7 +99,7 @@ export function StatsModal({ onClose }: { onClose: () => void }) {
                     <span className="text-lg">{e.icon}</span>
                     <span className="truncate text-sm font-semibold text-slate-700">
                       {e.name}
-                      {e.isSelf && <span className="ml-1 text-xs font-normal text-emerald-600">(you)</span>}
+                      {e.isSelf && <span className="ml-1 text-xs font-normal text-emerald-600">{t("stats.you")}</span>}
                     </span>
                   </span>
                   <span className={`shrink-0 font-mono text-sm font-bold ${e.online < 0 ? "text-rose-500" : "text-emerald-600"}`}>

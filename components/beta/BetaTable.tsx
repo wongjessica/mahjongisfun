@@ -4,6 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { tileName, windShort } from "@/lib/i18n/labels";
+import { isChinese } from "@/lib/i18n/lang";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useGameSounds } from "@/components/game/useGameSounds";
 import { useHumanAutoDraw } from "@/components/game/useHumanAutoDraw";
@@ -11,15 +15,15 @@ import { SoundToggle } from "@/components/SoundToggle";
 import { FullscreenButton } from "@/components/beta/FullscreenButton";
 import { DiceRoll } from "@/components/board/DiceRoll";
 import { RoundEndOverlay } from "@/components/board/WinnerBanner";
-import { TileFace, tileLabel } from "@/components/tiles/TileFace";
+import { TileFace } from "@/components/tiles/TileFace";
 import { toGameAction } from "@/lib/mahjong/actions";
 import { Meld } from "@/lib/mahjong/melds";
 import { getLegalActions } from "@/lib/mahjong/reducer";
 import { Wind, nextSeat } from "@/lib/mahjong/state";
 import { sortTiles } from "@/lib/mahjong/tiles";
 
-const WIND_NAME: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 const WIND_GLYPH: Record<number, string> = { 1: "東", 2: "南", 3: "西", 4: "北" };
+const WIND_GLYPH_HANS: Record<number, string> = { 1: "东", 2: "南", 3: "西", 4: "北" };
 const WIND_LETTER: Record<number, string> = { 1: "E", 2: "S", 3: "W", 4: "N" };
 
 // Each seat gets one accent, keyed by where it sits relative to you, so a
@@ -82,6 +86,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
   const thinkingSeat = useBotDriver(rollingDice);
   useHumanAutoDraw(rollingDice);
   const { state, dispatch, humanSeat, botNames, icons } = useGame();
+  const { lang, t } = useLang();
   useGameSounds(state, humanSeat, rollingDice);
 
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
@@ -133,7 +138,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
   const myHand = sortTiles(state.players[humanSeat].concealedTiles.filter((t) => t.id !== drawnId));
   const myDrawn = drawnId ? state.players[humanSeat].concealedTiles.find((t) => t.id === drawnId) : null;
 
-  const seatName = (s: number) => (s === humanSeat ? "You" : botNames[s] ?? `Seat ${s + 1}`);
+  const seatName = (s: number) => (s === humanSeat ? t("common.you") : botNames[s] ?? `Seat ${s + 1}`);
 
   // ---- render helpers ----
 
@@ -149,7 +154,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         <span className={`h-2 w-2 rounded-full ${DOT[accentOf(seat)]}`} />
         <span>{icons[seat] ?? "🀄"}</span>
         <span className="max-w-[80px] truncate">{seatName(seat)}</span>
-        <span className="rounded bg-black/25 px-1 text-[10px]">{WIND_NAME[p.seatWind]}</span>
+        <span className="rounded bg-black/25 px-1 text-[10px]">{windShort(p.seatWind, lang)}</span>
         {state.dealerIndex === seat && <span className="rounded bg-rose-500 px-1 text-[10px] text-white">莊</span>}
         {thinkingSeat === seat && <span className="text-[10px] opacity-80">…</span>}
         <span className="text-[10px] opacity-70">{p.score >= 0 ? `+${p.score}` : p.score}</span>
@@ -220,6 +225,11 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
   // dealer's marked red), and the wall/fan info folded in underneath so it's
   // out of the corners.
   function Compass() {
+    // Seat pips show a single-character wind: a CJK glyph in Chinese, an
+    // initial (E/S/W/N) in English.
+    const glyphs = lang === "zh-Hans" ? WIND_GLYPH_HANS : WIND_GLYPH;
+    const pipText = (seat: number) =>
+      isChinese(lang) ? glyphs[state.players[seat].seatWind] : WIND_LETTER[state.players[seat].seatWind];
     const pip = (seat: number, pos: string) => {
       const isDealer = state.dealerIndex === seat;
       return (
@@ -228,21 +238,22 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
             isDealer ? "bg-rose-500 text-white" : "bg-black/45 text-emerald-100"
           }`}
         >
-          {WIND_LETTER[state.players[seat].seatWind]}
+          {pipText(seat)}
         </span>
       );
     };
     return (
       <div className="flex flex-col items-center gap-1">
         <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-950/50">
-          <span className="font-serif text-2xl font-bold text-amber-200">{WIND_GLYPH[state.roundWind]}</span>
+          <span className="font-serif text-2xl font-bold text-amber-200">{glyphs[state.roundWind]}</span>
           {pip(top, "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2")}
           {pip(bottom, "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2")}
           {pip(left, "left-0 top-1/2 -translate-x-1/2 -translate-y-1/2")}
           {pip(right, "right-0 top-1/2 translate-x-1/2 -translate-y-1/2")}
         </div>
         <div className="text-center text-[10px] font-medium leading-tight text-emerald-100/80">
-          {state.wall.liveTiles.length} left · {state.ruleset.fanMinimum}-fan
+          {t("status.tilesLeft", { n: state.wall.liveTiles.length })} ·{" "}
+          {state.ruleset.fanMinimum === 0 ? t("status.fanMin.any") : t("status.fanMin", { n: state.ruleset.fanMinimum })}
         </div>
       </div>
     );
@@ -285,7 +296,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
             onClick={() => doDiscard(tile.id)}
             className="absolute -top-7 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-500 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-lg"
           >
-            Discard ⤒
+            {t("action.discard")} ⤒
           </motion.button>
         )}
         <TileFace
@@ -313,21 +324,24 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         <FullscreenButton className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-emerald-100 hover:bg-black/50" />
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Menu"
+          aria-label={t("game.menu")}
           className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-emerald-100 hover:bg-black/50"
         >
           ☰
         </button>
         {menuOpen && (
-          <button aria-label="Close menu" onClick={() => setMenuOpen(false)} className="fixed inset-0 z-[-1] cursor-default" />
+          <button aria-label={t("common.close")} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-[-1] cursor-default" />
         )}
         {menuOpen && (
-          <div className="absolute right-0 top-10 flex flex-col rounded-xl border border-emerald-900 bg-emerald-950/95 p-1 text-sm shadow-xl">
+          <div className="absolute right-0 top-10 flex flex-col gap-1 rounded-xl border border-emerald-900 bg-emerald-950/95 p-1 text-sm shadow-xl">
+            <div className="px-2 pt-1">
+              <LanguageToggle variant="dark" />
+            </div>
             <button onClick={onNewMatch} className="rounded-lg px-4 py-2 text-left text-emerald-100 hover:bg-emerald-900">
-              New match
+              {t("game.newMatch")}
             </button>
             <Link href="/" className="rounded-lg px-4 py-2 text-left text-emerald-100 hover:bg-emerald-900">
-              Exit to classic
+              {t("game.exitClassic")}
             </Link>
           </div>
         )}
@@ -389,17 +403,17 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
                   onClick={() => act(winAction)}
                   className="rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 py-2 text-sm font-extrabold text-white ring-2 ring-emerald-200"
                 >
-                  🏆 Win!
+                  🏆 {t("action.winShort")}!
                 </motion.button>
               )}
               {ponAction && (
                 <button onClick={() => act(ponAction)} className="rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-4 py-2 text-sm font-bold text-white shadow">
-                  Pong
+                  {t("action.pong")}
                 </button>
               )}
               {kongActions.map((a, i) => (
                 <button key={i} onClick={() => act(a)} className="rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-4 py-2 text-sm font-bold text-white shadow">
-                  Kong
+                  {t("action.kong")}
                 </button>
               ))}
               {chiActions.map((a) => {
@@ -412,13 +426,13 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
                     onClick={() => act(a)}
                     className="rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-3 py-2 text-xs font-bold text-white shadow"
                   >
-                    Chi {t1 && tileLabel(t1)} {t2 && `+ ${tileLabel(t2)}`}
+                    {t("action.chiWith", { a: t1 ? tileName(t1, lang) : "", b: t2 ? tileName(t2, lang) : "" })}
                   </button>
                 );
               })}
               {passAction && (
                 <button onClick={() => act(passAction)} className="rounded-xl border border-white/40 bg-black/30 px-4 py-2 text-sm font-semibold text-white">
-                  Pass
+                  {t("action.pass")}
                 </button>
               )}
             </motion.div>
@@ -427,7 +441,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
 
         {!roundEnded && discardIds.size > 0 && !hasCall && (
           <span className="rounded-full bg-black/35 px-3 py-0.5 text-[11px] font-medium text-emerald-100">
-            {selectedTileId && discardIds.has(selectedTileId) ? "Tap the tile again (or “Discard”) to throw it" : "Tap a tile to pick it, then discard"}
+            {selectedTileId && discardIds.has(selectedTileId) ? t("hint.tapAgain") : t("hint.tapPick")}
           </span>
         )}
 
@@ -444,7 +458,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
           ))}
           {myDrawn && (
             <div className="ml-2 flex flex-col items-center border-l-2 border-dashed border-amber-300/60 pl-2">
-              <span className="mb-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-200/80">Drawn</span>
+              <span className="mb-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-200/80">{t("panel.drawn")}</span>
               <HandTile tile={myDrawn} drawn />
             </div>
           )}
@@ -468,7 +482,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
             onClick={() => setResultsOpen(true)}
             className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-900 shadow-xl"
           >
-            🏆 View Results
+            🏆 {t("end.viewResults")}
           </motion.button>
         )}
       </AnimatePresence>

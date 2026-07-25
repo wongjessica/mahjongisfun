@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { QrCode } from "./QrCode";
 
 /** In-game invite affordance: a small button in the status bar that opens a
@@ -9,6 +10,7 @@ import { QrCode } from "./QrCode";
  * that's already running (they'll spectate, then take an open seat). Shown
  * only in online play (CenterTable renders it when a roomCode is present). */
 export function InviteButton({ code }: { code: string }) {
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -32,10 +34,10 @@ export function InviteButton({ code }: { code: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Invite a friend"
+        title={t("invite.title")}
         className="flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-950/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-100 hover:bg-emerald-900/50"
       >
-        👥 Invite
+        👥 {t("invite.button")}
       </button>
 
       <AnimatePresence>
@@ -57,21 +59,21 @@ export function InviteButton({ code }: { code: string }) {
             >
               <button
                 onClick={() => setOpen(false)}
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               >
                 ✕
               </button>
 
-              <h2 className="text-lg font-bold text-slate-900">Invite a friend</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t("invite.title")}</h2>
               <button
                 onClick={copy}
-                title="Copy invite link"
+                title={t("invite.copyLink")}
                 className="mt-2 inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50 px-4 py-2 font-mono text-2xl font-bold tracking-[0.3em] text-emerald-700 hover:border-emerald-400"
               >
                 {code}
                 <span className="font-sans text-xs font-semibold tracking-normal text-emerald-500">
-                  {copied ? "copied!" : "copy link"}
+                  {copied ? t("lobby.copied") : t("lobby.copyLink")}
                 </span>
               </button>
 
@@ -81,9 +83,7 @@ export function InviteButton({ code }: { code: string }) {
                 </div>
               </div>
 
-              <p className="mt-2 text-xs text-slate-400">
-                Scan to join. They&apos;ll watch until the round ends, then can take an open seat.
-              </p>
+              <p className="mt-2 text-xs text-slate-400">{t("invite.scanNote")}</p>
             </motion.div>
           </motion.div>
         )}

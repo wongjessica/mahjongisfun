@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GameProvider } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { assignBotNames } from "@/components/game/botNames";
 import { BetaTable } from "@/components/beta/BetaTable";
 import { RotatePrompt } from "@/components/beta/RotatePrompt";
@@ -18,6 +19,7 @@ type MatchConfig = Pick<SetupConfig, "fanMinimum" | "anonymousDiscards" | "speed
  * presentation over the SAME game engine, so it never touches the classic
  * UI. Solo vs bots for now. */
 export default function BetaPage() {
+  const { t } = useLang();
   const [initialState, setInitialState] = useState<GameState | null>(null);
   const [matchConfig, setMatchConfig] = useState<MatchConfig | null>(null);
   const [botNames, setBotNames] = useState<Record<number, string>>({});
@@ -60,11 +62,11 @@ export default function BetaPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,_#1e3a2f,_#0f1f19)] p-4">
         <div className="rounded-full border border-amber-400/40 bg-amber-950/30 px-4 py-1 text-xs font-bold uppercase tracking-widest text-amber-300">
-          🧪 Beta · Authentic Table
+          🧪 {t("beta.badge")}
         </div>
         <SetupForm onStart={startGame} />
         <Link href="/" className="text-xs font-medium text-emerald-200/70 underline hover:text-emerald-100">
-          ← Back to the classic app
+          {t("beta.backClassic")}
         </Link>
       </main>
     );

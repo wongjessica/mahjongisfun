@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { windShort } from "@/lib/i18n/labels";
 import { ToggleRow, optionActive, optionBase, optionInactive } from "@/components/setup/SetupForm";
 import { RoomConfig, isPlayerConnected, playersInJoinOrder } from "@/lib/multiplayer/protocol";
 import { isOnlineAcrossDevices } from "@/lib/multiplayer/getTransport";
 import { QrCode } from "./QrCode";
 import { OnlineRoomState } from "./useOnlineRoom";
-
-const WIND_LABELS = ["East", "South", "West", "North"];
 
 /** Pre-game room screen: who's here, the invite code, and (for the host)
  * the match settings + start button. Seats are join order; every seat not
@@ -16,6 +16,7 @@ const WIND_LABELS = ["East", "South", "West", "North"];
  * the 2 humans + 2 bots / 3 + 1 / 4 + 0 rule with no extra choices to make. */
 export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: () => void }) {
   const { room, isActingHost, now, startGame, setConfig, mySeat, claimSeat } = online;
+  const { lang, t } = useLang();
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -53,25 +54,26 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
       className="mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
     >
       <div className="text-center">
-        <h1 className="text-xl font-bold text-slate-900">Game Lobby</h1>
+        <h1 className="text-xl font-bold text-slate-900">{t("lobby.title")}</h1>
         <button
           onClick={copyInvite}
-          title="Copy invite link"
+          title={t("invite.copyLink")}
           className="mt-2 inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50 px-4 py-2 font-mono text-2xl font-bold tracking-[0.3em] text-emerald-700 hover:border-emerald-400"
         >
           {room.code}
           <span className="text-xs font-sans font-semibold tracking-normal text-emerald-500">
-            {copied ? "copied!" : "copy link"}
+            {copied ? t("lobby.copied") : t("lobby.copyLink")}
           </span>
         </button>
         <p className="mt-1 text-xs text-slate-400">
-          Friends join with this code{isOnlineAcrossDevices() ? "" : " (device-only mode: works between tabs on this device until Firebase is configured)"}.
+          {t("lobby.joinNote")}
+          {!isOnlineAcrossDevices() && ` ${t("lobby.deviceOnly")}`}
         </p>
         <button
           onClick={() => setShowQr((v) => !v)}
           className="mt-2 text-xs font-semibold text-emerald-600 underline hover:text-emerald-800"
         >
-          {showQr ? "Hide QR code" : "📱 Show QR code"}
+          {showQr ? t("lobby.hideQr") : t("lobby.showQr")}
         </button>
         {showQr && (
           <motion.div
@@ -82,7 +84,7 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
             <div className="rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
               <QrCode value={inviteUrl} size={200} />
             </div>
-            <p className="text-xs text-slate-400">Scan with a phone camera to join instantly.</p>
+            <p className="text-xs text-slate-400">{t("lobby.scanHint")}</p>
           </motion.div>
         )}
       </div>
@@ -113,11 +115,11 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
                 />
                 <span className={`text-sm font-semibold ${player ? "text-slate-700" : "text-slate-400"}`}>
                   {player?.icon && <span className="mr-1">{player.icon}</span>}
-                  {player ? player.name : "Bot (auto-fills)"}
-                  {player && !connected && <span className="text-slate-400"> · reconnecting…</span>}
+                  {player ? player.name : t("lobby.botSeat")}
+                  {player && !connected && <span className="text-slate-400">{t("lobby.reconnecting")}</span>}
                   {seat === 0 && (
                     <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
-                      DEALS FIRST
+                      {t("lobby.dealsFirst")}
                     </span>
                   )}
                 </span>
@@ -128,10 +130,10 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
                     onClick={() => void claimSeat(seat)}
                     className="rounded-lg border border-emerald-500 px-2 py-0.5 text-[11px] font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
                   >
-                    Sit here
+                    {t("lobby.sitHere")}
                   </button>
                 )}
-                <span className="text-[10px] font-bold uppercase text-slate-400">{WIND_LABELS[seat]}</span>
+                <span className="text-[10px] font-bold uppercase text-slate-400">{windShort(seat + 1, lang)}</span>
               </span>
             </div>
           );
@@ -139,7 +141,7 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
       </div>
 
       <div>
-        <span className="block text-sm font-medium text-slate-700">Win minimum</span>
+        <span className="block text-sm font-medium text-slate-700">{t("setup.fanMin")}</span>
         <div className="mt-2 flex gap-2">
           {([0, 3, 5] as const).map((min) => (
             <button
@@ -149,14 +151,15 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
               onClick={() => updateConfig({ fanMinimum: min })}
               className={`${optionBase} ${config.fanMinimum === min ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
             >
-              {min}-fan{min === 5 ? " 🔥" : ""}
+              {min === 0 ? t("setup.fan.any") : t("setup.fan.n", { n: min })}
+              {min === 5 ? " 🔥" : ""}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <span className="block text-sm font-medium text-slate-700">Game speed</span>
+        <span className="block text-sm font-medium text-slate-700">{t("setup.speed")}</span>
         <div className="mt-2 flex gap-2">
           <button
             type="button"
@@ -164,7 +167,7 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
             onClick={() => updateConfig({ speed: "fast" })}
             className={`${optionBase} ${config.speed === "fast" ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            ⚡ Fast
+            ⚡ {t("setup.speed.fast")}
           </button>
           <button
             type="button"
@@ -172,20 +175,20 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
             onClick={() => updateConfig({ speed: "slow" })}
             className={`${optionBase} ${config.speed === "slow" ? optionActive : optionInactive} disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            🎬 Immersive
+            🎬 {t("setup.speed.slow")}
           </button>
         </div>
       </div>
 
       {isActingHost ? (
         <ToggleRow
-          label="Show who discarded"
-          hint="Off: all discards mix into one anonymous pile"
+          label={t("setup.showDiscarder")}
+          hint={t("setup.showDiscarder.hint")}
           checked={!config.anonymousDiscards}
           onChange={(checked) => updateConfig({ anonymousDiscards: !checked })}
         />
       ) : (
-        <p className="text-center text-xs text-slate-400">The host picks the match settings.</p>
+        <p className="text-center text-xs text-slate-400">{t("lobby.hostPicks")}</p>
       )}
 
       {isActingHost ? (
@@ -205,10 +208,10 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
           className="rounded-xl bg-emerald-700 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           {starting
-            ? "Starting…"
+            ? t("lobby.starting")
             : connectedCount >= 2
-              ? `Start Game (${connectedCount} player${connectedCount > 1 ? "s" : ""} + ${4 - connectedCount} bot${4 - connectedCount === 1 ? "" : "s"})`
-              : "Waiting for at least one more player…"}
+              ? t("lobby.startGame", { players: connectedCount, bots: 4 - connectedCount })
+              : t("lobby.waitingMore")}
         </motion.button>
       ) : (
         <p className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500">
@@ -217,12 +220,12 @@ export function Lobby({ online, onLeave }: { online: OnlineRoomState; onLeave: (
             animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ duration: 1, repeat: Infinity }}
           />
-          Waiting for the host to start…
+          {t("lobby.waitingHost")}
         </p>
       )}
 
       <button onClick={onLeave} className="text-xs font-medium text-slate-400 underline hover:text-slate-600">
-        Leave room
+        {t("end.leaveRoom")}
       </button>
     </motion.div>
   );

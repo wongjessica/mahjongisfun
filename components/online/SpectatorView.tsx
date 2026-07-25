@@ -1,12 +1,12 @@
 "use client";
 
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { windShort } from "@/lib/i18n/labels";
 import { CenterTable } from "@/components/board/CenterTable";
 import { DiscardBoard } from "@/components/board/DiscardBoard";
 import { PlayerPanel } from "@/components/board/PlayerPanel";
 import { OnlineRoomState } from "./useOnlineRoom";
-
-const WIND_NAMES: Record<number, string> = { 1: "East", 2: "South", 3: "West", 4: "North" };
 
 /** What a player who joined a running game sees: the live board, read-only,
  * with a panel to take an open seat (they're dealt in on the next round).
@@ -22,6 +22,7 @@ export function SpectatorView({
   onLeave: () => void;
 }) {
   const { state, botNames } = useGame();
+  const { lang, t } = useLang();
   const { room, mySeat, claimSeat } = online;
 
   const roundEnded = state.turn.phase === "round-ended";
@@ -31,9 +32,9 @@ export function SpectatorView({
 
   const winnerLine = roundEnded
     ? state.isDraw
-      ? "Wall exhausted — no winner this round."
+      ? t("end.wallExhausted")
       : state.winners
-          ?.map((w) => `${botNames[w.seat] ?? "Player"} won with ${w.fan} fan`)
+          ?.map((w) => t("end.wonWith", { name: botNames[w.seat] ?? t("spec.player"), fan: w.fan }))
           .join(" · ")
     : null;
 
@@ -41,10 +42,10 @@ export function SpectatorView({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-1.5 p-2 sm:p-2.5">
       <div className="flex items-center justify-between rounded-xl border border-amber-300/40 bg-amber-950/30 px-3 py-1.5">
         <span className="flex items-center gap-2 text-sm font-bold text-amber-200">
-          👀 Spectating · room {code}
+          {t("spec.header", { code })}
         </span>
         <button onClick={onLeave} className="text-xs font-medium text-amber-200/70 underline hover:text-amber-100">
-          Leave
+          {t("spec.leave")}
         </button>
       </div>
 
@@ -62,14 +63,11 @@ export function SpectatorView({
 
         {iClaimedSeat ? (
           <p className="text-sm font-semibold text-emerald-700">
-            You&apos;re in as {WIND_NAMES[state.players[mySeat]?.seatWind ?? 1]} — you&apos;ll be dealt in
-            when the next round starts.
+            {t("spec.youIn", { wind: windShort(state.players[mySeat]?.seatWind ?? 1, lang) })}
           </p>
         ) : freeSeats.length > 0 ? (
           <>
-            <p className="mb-2 text-sm font-medium text-slate-600">
-              Take an open seat — you&apos;ll join on the next round:
-            </p>
+            <p className="mb-2 text-sm font-medium text-slate-600">{t("spec.takeSeat")}</p>
             <div className="flex flex-wrap items-center justify-center gap-2">
               {freeSeats.map((seat) => (
                 <button
@@ -77,15 +75,16 @@ export function SpectatorView({
                   onClick={() => void claimSeat(seat)}
                   className="rounded-xl border-2 border-emerald-500 px-4 py-2 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
                 >
-                  Sit as {WIND_NAMES[state.players[seat]?.seatWind ?? 1]} (currently {botNames[seat] ?? "a bot"})
+                  {t("spec.sitAs", {
+                    wind: windShort(state.players[seat]?.seatWind ?? 1, lang),
+                    who: botNames[seat] ?? t("spec.aBot"),
+                  })}
                 </button>
               ))}
             </div>
           </>
         ) : (
-          <p className="text-sm font-medium text-slate-500">
-            All four seats are taken — enjoy the show! You&apos;ll be able to sit in if a seat opens up.
-          </p>
+          <p className="text-sm font-medium text-slate-500">{t("spec.allTaken")}</p>
         )}
       </div>
     </div>

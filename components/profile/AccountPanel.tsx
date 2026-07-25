@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { useProfile } from "./ProfileContext";
 import { StatsModal } from "./StatsModal";
 
@@ -9,6 +10,7 @@ import { StatsModal } from "./StatsModal";
  * button. Hidden entirely if Firebase auth isn't configured. */
 export function AccountPanel() {
   const { user, canSignIn, signIn, signOut } = useProfile();
+  const { t } = useLang();
   const [busy, setBusy] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function AccountPanel() {
     try {
       await signIn();
     } catch {
-      setError("Sign-in was cancelled or blocked. Try again?");
+      setError(t("acct.signInError"));
     } finally {
       setBusy(false);
     }
@@ -47,10 +49,10 @@ export function AccountPanel() {
               onClick={() => setStatsOpen(true)}
               className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800"
             >
-              📊 Stats
+              📊 {t("acct.stats")}
             </button>
             <button onClick={() => void signOut()} className="text-xs font-medium text-slate-400 underline hover:text-slate-600">
-              Sign out
+              {t("acct.signOut")}
             </button>
           </span>
         </div>
@@ -67,8 +69,8 @@ export function AccountPanel() {
         className="flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 disabled:opacity-60"
       >
         <GoogleG />
-        {busy ? "Signing in…" : "Sign in with Google"}
-        <span className="text-xs font-normal text-slate-400">· save your stats</span>
+        {busy ? t("acct.signingIn") : t("acct.signIn")}
+        <span className="text-xs font-normal text-slate-400">{t("acct.saveStats")}</span>
       </button>
       {error && <p className="text-center text-xs text-rose-500">{error}</p>}
     </div>

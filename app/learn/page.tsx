@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GameBoard } from "@/components/board/GameBoard";
 import { GameProvider } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { assignBotNames } from "@/components/game/botNames";
 import { LessonView } from "@/components/tutorial/LessonView";
 import { TutorialCoach } from "@/components/tutorial/TutorialCoach";
@@ -23,6 +24,7 @@ type Stage = "intro" | "lessons" | "practice";
  * and the fan-minimum dropped to 0 so any complete hand can win. */
 export default function LearnPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [stage, setStage] = useState<Stage>("intro");
   const [initialState, setInitialState] = useState<GameState | null>(null);
   const [botNames, setBotNames] = useState<Record<number, string>>({});
@@ -68,7 +70,7 @@ export default function LearnPage() {
           onClick={() => router.push("/")}
           className="fixed left-2 top-2 z-50 rounded-full border border-emerald-300/50 bg-emerald-950/70 px-3 py-1.5 text-xs font-semibold text-emerald-100 shadow-lg backdrop-blur hover:bg-emerald-900/80"
         >
-          ✕ Exit to full game
+          ✕ {t("learn.exitFull")}
         </button>
         <GameProvider
           key={gameKey}
@@ -93,29 +95,25 @@ export default function LearnPage() {
       <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-3xl border border-emerald-100 bg-white p-8 text-center shadow-xl">
         <span className="text-5xl">🀄</span>
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-emerald-950">Learn to Play</h1>
-          <p className="text-[15px] leading-relaxed text-gray-600">
-            Never played Hong Kong mahjong? This short tutorial teaches you everything — the tiles,
-            how to build a hand, claiming tiles, and how scoring works. Then you&apos;ll play a real
-            game against bots with a coach guiding every move.
-          </p>
+          <h1 className="text-2xl font-bold text-emerald-950">{t("learn.pageTitle")}</h1>
+          <p className="text-[15px] leading-relaxed text-gray-600">{t("learn.intro")}</p>
         </div>
         <div className="flex w-full flex-col gap-2">
           <button
             onClick={() => setStage("lessons")}
             className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700"
           >
-            Start the tutorial →
+            {t("learn.start")}
           </button>
           <button
             onClick={beginPractice}
             className="w-full rounded-xl border border-emerald-200 px-6 py-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
           >
-            Skip to a coached practice game
+            {t("learn.skip")}
           </button>
         </div>
         <Link href="/" className="text-xs font-medium text-gray-400 hover:text-gray-600">
-          ← Back to the app
+          {t("learn.backApp")}
         </Link>
       </div>
     </main>

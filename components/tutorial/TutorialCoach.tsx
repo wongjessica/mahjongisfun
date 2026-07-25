@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useGame } from "@/components/game/GameContext";
+import { useLang } from "@/components/i18n/LanguageContext";
 import { coachHint, CoachTone } from "@/lib/tutorial/coachHints";
 
 const TONE_STYLES: Record<CoachTone, string> = {
@@ -16,16 +17,18 @@ const TONE_STYLES: Record<CoachTone, string> = {
  * first-game checklist. Collapsible so it never gets in the way. */
 export function TutorialCoach() {
   const { state, humanSeat, botNames } = useGame();
+  const { lang, t } = useLang();
   const [collapsed, setCollapsed] = useState(false);
 
-  const nameForSeat = (seat: number) => (seat === humanSeat ? "You" : botNames[seat] ?? "A player");
-  const hint = coachHint(state, humanSeat, nameForSeat);
+  const nameForSeat = (seat: number) =>
+    seat === humanSeat ? t("common.you") : botNames[seat] ?? t("status.someone");
+  const hint = coachHint(state, humanSeat, nameForSeat, lang);
 
   const me = state.players[humanSeat];
   const milestones = [
-    { label: "Discard a tile", done: me.discards.length > 0 },
-    { label: "Claim a tile (optional)", done: me.melds.length > 0 },
-    { label: "Finish the round", done: state.turn.phase === "round-ended" },
+    { label: t("coach.milestone.discard"), done: me.discards.length > 0 },
+    { label: t("coach.milestone.claim"), done: me.melds.length > 0 },
+    { label: t("coach.milestone.finish"), done: state.turn.phase === "round-ended" },
   ];
 
   if (collapsed) {
@@ -61,12 +64,12 @@ export function TutorialCoach() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Coach</span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">{t("coach.title")}</span>
               <button
                 onClick={() => setCollapsed(true)}
                 className="text-[11px] font-medium text-gray-400 hover:text-gray-600"
               >
-                Hide
+                {t("coach.hide")}
               </button>
             </div>
             <AnimatePresence mode="wait">
@@ -80,7 +83,7 @@ export function TutorialCoach() {
                   TONE_STYLES[hint?.tone ?? "info"]
                 }`}
               >
-                {hint?.text ?? "Take your time — I'll pop in whenever it's your move."}
+                {hint?.text ?? t("coach.idle")}
               </motion.p>
             </AnimatePresence>
           </div>
