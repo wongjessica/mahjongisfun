@@ -101,9 +101,11 @@ export function SetupForm({
       className="relative mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
     >
       <RulesModal />
-      <SoundToggle className="absolute left-3 top-3 border-2 border-slate-200 text-slate-500 hover:border-slate-300" />
-      <LanguageToggle variant="light" className="absolute right-3 top-3" />
-      <div className="flex justify-center gap-1.5">
+      <SoundToggle className="absolute left-3 top-3 z-10 border-2 border-slate-200 text-slate-500 hover:border-slate-300" />
+      <LanguageToggle variant="light" className="absolute right-3 top-3 z-10" />
+      {/* Pushed below the sound/language controls so the decorative tiles
+          (which paint after them in the DOM) don't overlap the toggles. */}
+      <div className="mt-7 flex justify-center gap-1.5">
         {DECORATIVE_TILES.map((tile, i) => (
           <motion.div
             key={i}
