@@ -124,6 +124,11 @@ export const MESSAGES: Record<string, Entry> = {
   "learn.skip": { en: "Skip to a coached practice game", "zh-Hant": "略過，直接教練陪練", "zh-Hans": "跳过，直接教练陪练" },
   "learn.backApp": { en: "← Back to the app", "zh-Hant": "← 返回應用程式", "zh-Hans": "← 返回应用" },
   "learn.exitFull": { en: "Exit to full game", "zh-Hant": "離開教學", "zh-Hans": "离开教学" },
+  "lv.step": { en: "Step {a} of {b}", "zh-Hant": "第 {a} / {b} 步", "zh-Hans": "第 {a} / {b} 步" },
+  "lv.exit": { en: "Exit", "zh-Hant": "離開", "zh-Hans": "离开" },
+  "lv.next": { en: "Next →", "zh-Hant": "下一步 →", "zh-Hans": "下一步 →" },
+  "lv.startPractice": { en: "Start practice game →", "zh-Hant": "開始練習局 →", "zh-Hans": "开始练习局 →" },
+  "lv.notQuite": { en: "Not quite — {hint}", "zh-Hant": "還差一點 — {hint}", "zh-Hans": "还差一点 — {hint}" },
 
   // --- tutorial coach ---
   "coach.title": { en: "Coach", "zh-Hant": "教練", "zh-Hans": "教练" },

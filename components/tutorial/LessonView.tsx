@@ -3,11 +3,14 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { TileFace } from "@/components/tiles/TileFace";
-import { LESSONS, LessonStep, TileGroup, TOTAL_STEPS } from "@/lib/tutorial/lessons";
+import { useLang } from "@/components/i18n/LanguageContext";
+import { LESSONS, LessonStep, TileGroup, TOTAL_STEPS, pick } from "@/lib/tutorial/lessons";
 import { Tile, tileKey } from "@/lib/mahjong/tiles";
 
 /** A labelled cluster of tiles used inside lessons. */
 function GroupRow({ group }: { group: TileGroup }) {
+  const { lang } = useLang();
+  const label = group.label ? pick(group.label, lang) : "";
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="flex flex-wrap items-end justify-center gap-1">
@@ -15,10 +18,8 @@ function GroupRow({ group }: { group: TileGroup }) {
           <TileFace key={t.id} tile={t} size="sm" animateIn={false} />
         ))}
       </div>
-      {group.label && (
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700/70">
-          {group.label}
-        </span>
+      {label && (
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700/70">{label}</span>
       )}
     </div>
   );
@@ -41,6 +42,7 @@ interface LessonViewProps {
 }
 
 export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
+  const { lang, t } = useLang();
   const [lessonIdx, setLessonIdx] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
 
@@ -115,10 +117,10 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
             onClick={onExit}
             className="text-xs font-medium text-emerald-700/70 hover:text-emerald-900"
           >
-            ✕ Exit
+            ✕ {t("lv.exit")}
           </button>
           <span className="text-xs font-semibold text-emerald-800">
-            Step {globalIndex + 1} of {TOTAL_STEPS}
+            {t("lv.step", { a: globalIndex + 1, b: TOTAL_STEPS })}
           </span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
@@ -140,7 +142,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
                     : "bg-gray-100 text-gray-400"
               }`}
             >
-              {l.icon} {l.title}
+              {l.icon} {pick(l.title, lang)}
             </span>
           ))}
         </div>
@@ -157,19 +159,19 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
             className="flex flex-1 flex-col gap-4"
           >
-            <h2 className="text-2xl font-bold text-emerald-950">{step.title}</h2>
+            <h2 className="text-2xl font-bold text-emerald-950">{pick(step.title, lang)}</h2>
 
             {step.kind === "info" && (
               <>
                 <div className="flex flex-col gap-2 text-[15px] leading-relaxed text-gray-700">
                   {step.body.map((p, i) => (
-                    <p key={i}>{p}</p>
+                    <p key={i}>{pick(p, lang)}</p>
                   ))}
                 </div>
                 <Groups groups={step.groups} />
                 {step.callout && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    💡 {step.callout}
+                    💡 {pick(step.callout, lang)}
                   </div>
                 )}
               </>
@@ -177,7 +179,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
 
             {step.kind === "quiz" && (
               <>
-                <p className="text-[15px] leading-relaxed text-gray-700">{step.prompt}</p>
+                <p className="text-[15px] leading-relaxed text-gray-700">{pick(step.prompt, lang)}</p>
                 <Groups groups={step.groups} />
                 <div className="flex flex-col gap-2">
                   {step.options.map((opt, i) => {
@@ -207,7 +209,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
                             ))}
                           </span>
                         )}
-                        {opt.label && <span>{opt.label}</span>}
+                        {pick(opt.label, lang) && <span>{pick(opt.label, lang)}</span>}
                         {showState && isCorrect && <span className="ml-auto">✓</span>}
                         {chosen && !isCorrect && <span className="ml-auto">✗</span>}
                       </button>
@@ -220,7 +222,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
                   >
-                    {step.explanation}
+                    {pick(step.explanation, lang)}
                   </motion.div>
                 )}
               </>
@@ -228,7 +230,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
 
             {step.kind === "pick" && (
               <>
-                <p className="text-[15px] leading-relaxed text-gray-700">{step.prompt}</p>
+                <p className="text-[15px] leading-relaxed text-gray-700">{pick(step.prompt, lang)}</p>
                 <Groups groups={step.groups} />
                 <div className="flex flex-wrap justify-center gap-3 rounded-2xl bg-white p-4 shadow-sm">
                   {step.choices.map((t) => {
@@ -259,7 +261,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
                     animate={{ opacity: 1 }}
                     className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
                   >
-                    Not quite — {step.hint}
+                    {t("lv.notQuite", { hint: pick(step.hint, lang) })}
                   </motion.div>
                 )}
                 {revealed && (
@@ -268,7 +270,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
                   >
-                    ✓ {step.explanation}
+                    ✓ {pick(step.explanation, lang)}
                   </motion.div>
                 )}
               </>
@@ -283,7 +285,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
           onClick={goBack}
           className="rounded-xl px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
         >
-          {isVeryFirst ? "Back" : "← Back"}
+          {isVeryFirst ? t("common.back") : `← ${t("common.back")}`}
         </button>
         <button
           onClick={goNext}
@@ -292,7 +294,7 @@ export function LessonView({ onFinishAll, onExit }: LessonViewProps) {
             canProceed ? "bg-emerald-600 hover:bg-emerald-700" : "cursor-not-allowed bg-gray-300"
           }`}
         >
-          {isVeryLast ? "Start practice game →" : "Next →"}
+          {isVeryLast ? t("lv.startPractice") : t("lv.next")}
         </button>
       </footer>
     </div>

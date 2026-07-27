@@ -19,7 +19,7 @@ describe("tutorial lesson content", () => {
       for (const step of lesson.steps) {
         if (step.kind !== "quiz") continue;
         const correct = step.options.filter((o) => o.correct).length;
-        expect(correct, `${lesson.id}: "${step.title}"`).toBe(1);
+        expect(correct, `${lesson.id}: "${step.title.en}"`).toBe(1);
       }
     }
   });
@@ -28,10 +28,10 @@ describe("tutorial lesson content", () => {
     for (const lesson of LESSONS) {
       for (const step of lesson.steps) {
         if (step.kind !== "pick") continue;
-        expect(step.correctKeys.length, `${lesson.id}: "${step.title}"`).toBeGreaterThan(0);
+        expect(step.correctKeys.length, `${lesson.id}: "${step.title.en}"`).toBeGreaterThan(0);
         const choiceKeys = new Set(step.choices.map((t) => tileKey(t)));
         for (const key of step.correctKeys) {
-          expect(choiceKeys.has(key), `${lesson.id}: "${step.title}" missing ${key}`).toBe(true);
+          expect(choiceKeys.has(key), `${lesson.id}: "${step.title.en}" missing ${key}`).toBe(true);
         }
       }
     }
