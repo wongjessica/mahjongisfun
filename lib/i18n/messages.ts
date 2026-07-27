@@ -73,6 +73,8 @@ export const MESSAGES: Record<string, Entry> = {
   "panel.drawn": { en: "Drawn", "zh-Hant": "摸到", "zh-Hans": "摸到" },
   "panel.inHand": { en: "{n} in hand", "zh-Hant": "手牌 {n}", "zh-Hans": "手牌 {n}" },
   "panel.thinking": { en: "thinking…", "zh-Hant": "思考中…", "zh-Hans": "思考中…" },
+  "panel.yourTurn": { en: "Your turn", "zh-Hant": "輪到你", "zh-Hans": "轮到你" },
+  "panel.turn": { en: "Turn", "zh-Hant": "行牌中", "zh-Hans": "行牌中" },
   "panel.thinkingWord": { en: "thinking", "zh-Hant": "思考中", "zh-Hans": "思考中" },
   "panel.chiFromHere": { en: "← chi from here", "zh-Hant": "← 可上此家", "zh-Hans": "← 可吃此家" },
   "panel.across": { en: "across", "zh-Hant": "對家", "zh-Hans": "对家" },

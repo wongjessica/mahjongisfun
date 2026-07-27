@@ -62,41 +62,36 @@ function PositionBadge({ position }: { position: SeatPosition }) {
   );
 }
 
-/** A compact "N tiles in hand" indicator for opponents -- showing a full
- * row of face-down tile backs wastes space that the discard pile (the
- * thing you actually need to read to count tiles) needs more. */
-function HandCount({ count }: { count: number }) {
-  const { t } = useLang();
+/** Tiny inline "tiles in hand" chip for opponents -- a mini stack of backs
+ * plus the count, small enough to sit on the name row instead of taking its
+ * own line (keeps the panel short so there's less to scroll past). */
+function HandCountChip({ count }: { count: number }) {
   return (
-    <div className="flex items-center gap-1.5 text-slate-500">
-      <div className="relative h-6 w-8">
+    <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+      <span className="relative inline-block h-3.5 w-4">
         {[0, 1, 2].map((i) => (
-          <div
+          <span
             key={i}
-            className="absolute top-0 h-6 w-4 rounded-[3px] border border-red-950/40"
-            style={{
-              left: i * 5,
-              background: "linear-gradient(155deg, #8a2530 0%, #6d1a24 55%, #591620 100%)",
-              zIndex: i,
-            }}
+            className="absolute top-0 h-3.5 w-2.5 rounded-[2px] border border-red-950/40"
+            style={{ left: i * 3, background: "linear-gradient(155deg,#8a2530,#591620)", zIndex: i }}
           />
         ))}
-      </div>
-      <span className="text-xs font-semibold">{t("panel.inHand", { n: count })}</span>
-    </div>
+      </span>
+      {count}
+    </span>
   );
 }
 
-function MeldGroup({ meld, speed }: { meld: Meld; speed: GameSpeed }) {
+function MeldGroup({ meld, speed, size = "sm" }: { meld: Meld; speed: GameSpeed; size?: TileSize }) {
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex gap-0.5 rounded-md bg-black/5 p-1"
+      className="flex gap-0.5 rounded-md bg-black/5 p-0.5"
     >
       {meld.tiles.map((tile) => (
-        <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} speed={speed} />
+        <TileFace key={tile.id} tile={tile} size={size} layoutId={tile.id} speed={speed} />
       ))}
     </motion.div>
   );
@@ -148,24 +143,34 @@ export function PlayerPanel({
   }, []);
   const dealStagger = isInitialDealRef.current && speed !== "fast";
 
+  // Opponents' melds/flowers render at a smaller size than your own hand, so
+  // their panels stay short. The count of hidden tiles moves onto the name row.
+  const bonusSize = isHuman ? "sm" : "xs";
+
   return (
     <motion.div
       layout
-      className={`flex flex-col gap-1 rounded-xl border p-2 backdrop-blur-sm transition-colors ${
+      // A clear, pulsing amber highlight on whoever's turn it is -- easy to
+      // spot at a glance, which the subtle static border wasn't.
+      animate={
         isActive
-          ? "border-amber-400 bg-white/90 shadow-[0_0_0_3px_rgba(251,191,36,0.35)]"
-          : "border-white/10 bg-white/80"
+          ? { boxShadow: ["0 0 0 0 rgba(251,191,36,0.5)", "0 0 0 5px rgba(251,191,36,0.18)", "0 0 0 0 rgba(251,191,36,0.5)"] }
+          : { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      }
+      transition={{ duration: 1.5, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
+      className={`flex flex-col gap-1 rounded-xl border-2 p-2 backdrop-blur-sm transition-colors ${
+        isActive ? "border-amber-400 bg-amber-50/90" : "border-white/10 bg-white/80"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
           <Avatar
             seatWind={player.seatWind}
             label={icons[seat] ?? (isHuman ? "🙂" : botNames[seat]?.[0] ?? "?")}
           />
-          <div className="leading-tight">
-            <div className="flex items-center gap-1 text-sm font-semibold text-slate-800">
-              {isHuman ? t("common.you") : botNames[seat]}
+          <div className="min-w-0 leading-tight">
+            <div className="flex flex-wrap items-center gap-1 text-sm font-semibold text-slate-800">
+              <span className="truncate">{isHuman ? t("common.you") : botNames[seat]}</span>
               <span
                 className={`rounded px-1 py-0.5 text-[10px] font-bold ${WIND_BADGE[player.seatWind]}`}
               >
@@ -175,6 +180,15 @@ export function PlayerPanel({
                 <span className="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-700">
                   {t("panel.dealer")}
                 </span>
+              )}
+              {isActive && (
+                <motion.span
+                  animate={{ opacity: [0.55, 1, 0.55] }}
+                  transition={{ duration: 1.2, repeat: Infinity }}
+                  className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white"
+                >
+                  {isHuman ? t("panel.yourTurn") : t("panel.turn")}
+                </motion.span>
               )}
               {!isHuman && position && <PositionBadge position={position} />}
             </div>
@@ -195,12 +209,17 @@ export function PlayerPanel({
             )}
           </div>
         </div>
-        <span
-          className={`font-mono text-sm font-semibold ${
-            player.score > 0 ? "text-emerald-600" : player.score < 0 ? "text-rose-600" : "text-slate-400"
-          }`}
-        >
-          {player.score > 0 ? `+${player.score}` : player.score}
+        <span className="flex shrink-0 items-center gap-1.5">
+          {/* Hidden-tile count sits here (inline) for opponents; your own hand
+              is shown in full below, so no count is needed. */}
+          {!revealHand && <HandCountChip count={player.concealedTiles.length} />}
+          <span
+            className={`font-mono text-sm font-semibold ${
+              player.score > 0 ? "text-emerald-600" : player.score < 0 ? "text-rose-600" : "text-slate-400"
+            }`}
+          >
+            {player.score > 0 ? `+${player.score}` : player.score}
+          </span>
         </span>
       </div>
 
@@ -208,18 +227,18 @@ export function PlayerPanel({
         <div className="flex flex-wrap gap-1">
           <AnimatePresence>
             {player.flowers.map((tile) => (
-              <TileFace key={tile.id} tile={tile} size="sm" layoutId={tile.id} speed={speed} />
+              <TileFace key={tile.id} tile={tile} size={bonusSize} layoutId={tile.id} speed={speed} />
             ))}
           </AnimatePresence>
           <AnimatePresence>
             {player.melds.map((meld, i) => (
-              <MeldGroup key={`${meld.type}-${i}-${meld.tiles[0]?.id}`} meld={meld} speed={speed} />
+              <MeldGroup key={`${meld.type}-${i}-${meld.tiles[0]?.id}`} meld={meld} speed={speed} size={bonusSize} />
             ))}
           </AnimatePresence>
         </div>
       )}
 
-      {revealHand ? (
+      {revealHand && (
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-wrap gap-1">
             <AnimatePresence>
@@ -278,8 +297,6 @@ export function PlayerPanel({
             )}
           </AnimatePresence>
         </div>
-      ) : (
-        <HandCount count={player.concealedTiles.length} />
       )}
     </motion.div>
   );

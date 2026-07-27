@@ -83,6 +83,7 @@ export function tileLabel(tile: Pick<Tile, "suit" | "rank">): string {
 // viewports and grow back to their original desktop size at the sm: (640px)
 // breakpoint, so a full hand of 14 tiles never forces horizontal scrolling.
 const SIZE_CLASSES = {
+  xs: "w-6 h-[34px]",
   sm: "w-[30px] h-[42px]",
   md: "w-9 h-[50px] sm:w-11 sm:h-[62px]",
   lg: "w-11 h-[62px] sm:w-[62px] sm:h-[87px]",
