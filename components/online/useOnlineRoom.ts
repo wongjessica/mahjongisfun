@@ -33,17 +33,28 @@ function uidField(): { uid?: string } {
 const PLAYER_ID_KEY = "mahjong-player-id";
 const PLAYER_NAME_KEY = "mahjong-player-name";
 
-/** Identity is per-TAB (sessionStorage), not per-device: that's what makes
- * a two-tab game on one machine possible with the local transport, and it
- * costs nothing online -- rejoining after a closed tab just means entering
- * the room code again. */
+/** A stable identity for this device, persisted in localStorage so it
+ * SURVIVES a closed/discarded tab. That's what lets someone who accidentally
+ * loses their tab reopen the room link and be recognised as the same player,
+ * dropping straight back into their seat instead of being locked out as a
+ * spectator. Trade-off: two concurrent tabs on one device now share an
+ * identity -- fine for real play (Firebase, one tab per person), and only the
+ * local dev-only two-tab testing transport would need distinct ids set by
+ * hand. */
 export function getPlayerId(): string {
-  let id = sessionStorage.getItem(PLAYER_ID_KEY);
-  if (!id) {
-    id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  try {
+    const fromTab = sessionStorage.getItem(PLAYER_ID_KEY);
+    if (fromTab) return fromTab;
+    let id = localStorage.getItem(PLAYER_ID_KEY);
+    if (!id) {
+      id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem(PLAYER_ID_KEY, id);
+    }
     sessionStorage.setItem(PLAYER_ID_KEY, id);
+    return id;
+  } catch {
+    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
-  return id;
 }
 
 export function getSavedPlayerName(): string {
@@ -100,18 +111,30 @@ export async function joinOnlineRoom(
   const alreadyIn = Boolean(room.players[playerId]);
   if (!alreadyIn) {
     if (room.status !== "lobby") {
-      // A running room always lets you in. If a seat the current round was
-      // dealt to a HUMAN is now empty (someone left, it's being bot-covered),
-      // take it and start playing immediately. Otherwise join as a SPECTATOR
-      // (seat -1): watch the game, and take an open bot seat from the
+      // A running room always lets you in. A seat the current round was dealt
+      // to a HUMAN is reclaimable if no CONNECTED player currently holds it --
+      // i.e. it's empty, or its holder left/disconnected and is being
+      // bot-covered. Take that seat and start playing immediately; otherwise
+      // join as a SPECTATOR (seat -1) and take an open bot seat from the
       // spectator view to be dealt in next round.
-      const taken = new Set(Object.values(room.players).map((p) => p.seat));
+      const now = transport.now();
+      const connectedSeats = new Set(
+        Object.values(room.players)
+          .filter((p) => isPlayerConnected(p, now))
+          .map((p) => p.seat)
+      );
       const dealtHumans: number[] = room.round
         ? (JSON.parse(room.round.initialStateJson) as { players: { seat: number; isBot: boolean }[] })
             .players.filter((p) => !p.isBot)
             .map((p) => p.seat)
         : [];
-      const orphanSeat = dealtHumans.find((seat) => !taken.has(seat));
+      const orphanSeat = dealtHumans.find((seat) => !connectedSeats.has(seat));
+      // If a disconnected "ghost" record still occupies that seat, clear it so
+      // the seat isn't double-held once we sit down.
+      if (orphanSeat !== undefined) {
+        const ghost = Object.values(room.players).find((p) => p.seat === orphanSeat && p.id !== playerId);
+        if (ghost) await transport.removePlayer(code, ghost.id);
+      }
       await transport.setPlayer(code, {
         id: playerId,
         name: playerName,
