@@ -255,6 +255,8 @@ export const MESSAGES: Record<string, Entry> = {
   "fullscreen.iosStep1": { en: "Tap the Share button (the box with an ↑) in Safari's toolbar.", "zh-Hant": "按 Safari 工具列上的「分享」按鈕（帶 ↑ 的方框）。", "zh-Hans": "点 Safari 工具栏上的「分享」按钮（带 ↑ 的方框）。" },
   "fullscreen.iosStep2": { en: "Scroll down and choose “Add to Home Screen”.", "zh-Hant": "向下捲動，選擇「加至主畫面」。", "zh-Hans": "向下滚动，选择「添加到主屏幕」。" },
   "fullscreen.iosStep3": { en: "Open Mahjong from your Home Screen — it runs fullscreen.", "zh-Hant": "從主畫面開啟麻雀 — 即為全螢幕。", "zh-Hans": "从主屏幕打开麻将 — 即为全屏。" },
+  "fullscreen.chromeIntro": { en: "On iPhone, only Safari can launch a web app fullscreen — Chrome and other browsers can't (Apple's rule). Switch to Safari:", "zh-Hant": "在 iPhone 上，只有 Safari 能全螢幕開啟網頁應用，Chrome 等其他瀏覽器不行（Apple 的限制）。請改用 Safari：", "zh-Hans": "在 iPhone 上，只有 Safari 能全屏打开网页应用，Chrome 等其他浏览器不行（苹果的限制）。请改用 Safari：" },
+  "fullscreen.chromeStep1": { en: "Open jessicawong.dev in Safari (Apple's built-in browser).", "zh-Hant": "在 Safari（Apple 內建瀏覽器）開啟 jessicawong.dev。", "zh-Hans": "在 Safari（苹果自带浏览器）打开 jessicawong.dev。" },
   "common.gotIt": { en: "Got it", "zh-Hant": "知道了", "zh-Hans": "知道了" },
 };
 

@@ -14,6 +14,10 @@ export function FullscreenButton({ className = "" }: { className?: string }) {
   const [isFs, setIsFs] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [standalone, setStandalone] = useState(false);
+  // On iOS, only Safari can install a fullscreen home-screen app -- Chrome and
+  // other browsers can't (Apple forces WebKit and disables the PWA path), so
+  // we steer those users to Safari.
+  const [iosOtherBrowser, setIosOtherBrowser] = useState(false);
 
   useEffect(() => {
     const onChange = () => setIsFs(!!document.fullscreenElement);
@@ -22,6 +26,9 @@ export function FullscreenButton({ className = "" }: { className?: string }) {
       window.matchMedia?.("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setStandalone(Boolean(inStandalone));
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    setIosOtherBrowser(isIOS && /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
@@ -61,9 +68,15 @@ export function FullscreenButton({ className = "" }: { className?: string }) {
               className="w-full max-w-sm rounded-2xl bg-white p-5 text-slate-800 shadow-2xl"
             >
               <h2 className="text-lg font-bold text-emerald-900">📱 {t("fullscreen.iosTitle")}</h2>
-              <p className="mt-1 text-sm text-slate-600">{t("fullscreen.iosIntro")}</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {iosOtherBrowser ? t("fullscreen.chromeIntro") : t("fullscreen.iosIntro")}
+              </p>
               <ol className="mt-3 flex flex-col gap-2">
-                {[t("fullscreen.iosStep1"), t("fullscreen.iosStep2"), t("fullscreen.iosStep3")].map((step, i) => (
+                {[
+                  iosOtherBrowser ? t("fullscreen.chromeStep1") : t("fullscreen.iosStep1"),
+                  t("fullscreen.iosStep2"),
+                  t("fullscreen.iosStep3"),
+                ].map((step, i) => (
                   <li key={i} className="flex gap-2 text-sm">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
                       {i + 1}
