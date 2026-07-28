@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useGame } from "@/components/game/GameContext";
 import { useLang } from "@/components/i18n/LanguageContext";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
-import { tileName, windShort } from "@/lib/i18n/labels";
+import { windShort } from "@/lib/i18n/labels";
 import { isChinese } from "@/lib/i18n/lang";
 import { useBotDriver } from "@/components/game/useBotDriver";
 import { useGameSounds } from "@/components/game/useGameSounds";
@@ -15,7 +15,7 @@ import { SoundToggle } from "@/components/SoundToggle";
 import { FullscreenButton } from "@/components/beta/FullscreenButton";
 import { DiceRoll } from "@/components/board/DiceRoll";
 import { RoundEndOverlay } from "@/components/board/WinnerBanner";
-import { TileFace } from "@/components/tiles/TileFace";
+import { TileFace, TileSize } from "@/components/tiles/TileFace";
 import { toGameAction } from "@/lib/mahjong/actions";
 import { Meld } from "@/lib/mahjong/melds";
 import { getLegalActions } from "@/lib/mahjong/reducer";
@@ -42,31 +42,15 @@ const POND_TINT: Record<Accent, string> = {
   rose: "bg-rose-400/10 border-rose-300/25",
 };
 
-/** A single face-down tile back -- the same maroon back as the classic UI, so
- * opponents' hidden tiles read as tiles instead of vanishing into the felt. */
-function Back({ w, h }: { w: number; h: number }) {
-  return (
-    <div
-      className="shrink-0 rounded-[3px] border border-red-950/50"
-      style={{
-        width: w,
-        height: h,
-        background: "linear-gradient(150deg, #8a2530 0%, #6d1a24 55%, #591620 100%)",
-        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.18), inset 0 -3px 6px rgba(0,0,0,0.35)",
-      }}
-    />
-  );
-}
-
 /** Face-up meld cluster (exposed pon/chi/kong). */
-function MeldRow({ melds }: { melds: Meld[] }) {
+function MeldRow({ melds, size = "sm" }: { melds: Meld[]; size?: TileSize }) {
   if (melds.length === 0) return null;
   return (
-    <div className="flex gap-1">
+    <div className="flex flex-wrap gap-1">
       {melds.map((m, i) => (
         <div key={`${m.type}-${i}`} className="flex gap-px rounded bg-black/20 p-0.5">
           {m.tiles.map((t) => (
-            <TileFace key={t.id} tile={t} size="sm" animateIn={false} layoutAnimate={false} />
+            <TileFace key={t.id} tile={t} size={size} animateIn={false} layoutAnimate={false} />
           ))}
         </div>
       ))}
@@ -74,7 +58,18 @@ function MeldRow({ melds }: { melds: Meld[] }) {
   );
 }
 
-type Orient = "top" | "left" | "right";
+/** Tiny "N hidden tiles" indicator for an opponent's badge. */
+function HandCountMini({ count }: { count: number }) {
+  return (
+    <span className="flex items-center gap-0.5 text-[10px] opacity-90">
+      <span
+        className="inline-block h-3 w-2 rounded-[1px] border border-red-950/40"
+        style={{ background: "linear-gradient(150deg,#8a2530,#591620)" }}
+      />
+      {count}
+    </span>
+  );
+}
 
 interface BetaTableProps {
   onNextRound: (nextDealerIndex: number, startingScores: [number, number, number, number], nextRoundWind: Wind) => void;
@@ -153,80 +148,49 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
       >
         <span className={`h-2 w-2 rounded-full ${DOT[accentOf(seat)]}`} />
         <span>{icons[seat] ?? "🀄"}</span>
-        <span className="max-w-[80px] truncate">{seatName(seat)}</span>
+        <span className="max-w-[72px] truncate">{seatName(seat)}</span>
         <span className="rounded bg-black/25 px-1 text-[10px]">{windShort(p.seatWind, lang)}</span>
         {state.dealerIndex === seat && <span className="rounded bg-rose-500 px-1 text-[10px] text-white">莊</span>}
+        {seat !== humanSeat && <HandCountMini count={p.concealedTiles.length} />}
         {thinkingSeat === seat && <span className="text-[10px] opacity-80">…</span>}
         <span className="text-[10px] opacity-70">{p.score >= 0 ? `+${p.score}` : p.score}</span>
       </div>
     );
   }
 
-  // Opponent's hidden hand -- maroon backs during play, revealed (sorted,
-  // face-up) once the round ends.
-  function OppTiles({ seat, vertical }: { seat: number; vertical: boolean }) {
-    const p = state.players[seat];
-    if (roundEnded) {
-      return (
-        <div className={vertical ? "flex flex-col gap-px" : "flex gap-px"}>
-          {sortTiles(p.concealedTiles).map((t) => (
-            <TileFace key={t.id} tile={t} size="sm" animateIn={false} layoutAnimate={false} />
-          ))}
-        </div>
-      );
-    }
-    // Overlap the backs into a compact stack so a 13-tile hand stays small on
-    // a phone (a full non-overlapped row/column is what was shoving the call
-    // buttons off the table).
-    return (
-      <div className={vertical ? "flex flex-col" : "flex"}>
-        {Array.from({ length: p.concealedTiles.length }).map((_, i) => (
-          <div key={i} style={vertical ? { marginTop: i ? -11 : 0 } : { marginLeft: i ? -9 : 0 }}>
-            {vertical ? <Back w={26} h={18} /> : <Back w={18} h={26} />}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  function Bonuses({ seat }: { seat: number }) {
+  function Bonuses({ seat, size = "sm" }: { seat: number; size?: TileSize }) {
     const p = state.players[seat];
     if (p.flowers.length === 0 && p.melds.length === 0) return null;
     return (
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
         {p.flowers.map((t) => (
-          <TileFace key={t.id} tile={t} size="sm" animateIn={false} layoutAnimate={false} />
+          <TileFace key={t.id} tile={t} size={size} animateIn={false} layoutAnimate={false} />
         ))}
-        <MeldRow melds={p.melds} />
+        <MeldRow melds={p.melds} size={size} />
       </div>
     );
   }
 
-  // One opponent "station": identical template on every edge -- badge (outer),
-  // then melds/flowers, then the concealed hand (inner, toward the pond). A
-  // glow ring marks whose turn it is.
-  function Station({ seat, orient }: { seat: number; orient: Orient }) {
+  // A compact opponent card: badge (name/wind/dealer/count/score) + their
+  // exposed melds & flowers. NO stack of face-down backs -- that's what used
+  // to bury the pond; the hidden-tile count in the badge conveys it instead.
+  function OppChip({ seat }: { seat: number }) {
     const active = state.turn.activeSeat === seat && !roundEnded;
-    const ring = active
-      ? "ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)]"
-      : "ring-1 ring-white/10";
-    const dir =
-      orient === "top" ? "flex-col items-center" : orient === "right" ? "flex-row-reverse items-center" : "flex-row items-center";
     return (
-      <div className={`flex ${dir} gap-1.5 rounded-2xl bg-black/20 p-1.5 ${ring}`}>
+      <div
+        className={`flex max-w-full flex-col items-center gap-1 rounded-xl bg-black/25 p-1.5 ${
+          active ? "ring-2 ring-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.5)]" : "ring-1 ring-white/10"
+        }`}
+      >
         <Badge seat={seat} />
-        <Bonuses seat={seat} />
-        <OppTiles seat={seat} vertical={orient !== "top"} />
+        <Bonuses seat={seat} size="xs" />
       </div>
     );
   }
 
   // Center compass: prevailing wind glyph, each seat's wind on its side (the
-  // dealer's marked red), and the wall/fan info folded in underneath so it's
-  // out of the corners.
+  // dealer's marked red), and the wall/fan info underneath.
   function Compass() {
-    // Seat pips show a single-character wind: a CJK glyph in Chinese, an
-    // initial (E/S/W/N) in English.
     const glyphs = lang === "zh-Hans" ? WIND_GLYPH_HANS : WIND_GLYPH;
     const pipText = (seat: number) =>
       isChinese(lang) ? glyphs[state.players[seat].seatWind] : WIND_LETTER[state.players[seat].seatWind];
@@ -243,15 +207,15 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
       );
     };
     return (
-      <div className="flex flex-col items-center gap-1">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-950/50">
-          <span className="font-serif text-2xl font-bold text-amber-200">{glyphs[state.roundWind]}</span>
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-950/60">
+          <span className="font-serif text-xl font-bold text-amber-200">{glyphs[state.roundWind]}</span>
           {pip(top, "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2")}
           {pip(bottom, "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2")}
           {pip(left, "left-0 top-1/2 -translate-x-1/2 -translate-y-1/2")}
           {pip(right, "right-0 top-1/2 translate-x-1/2 -translate-y-1/2")}
         </div>
-        <div className="text-center text-[10px] font-medium leading-tight text-emerald-100/80">
+        <div className="whitespace-nowrap text-center text-[10px] font-medium leading-tight text-emerald-100/80">
           {t("status.tilesLeft", { n: state.wall.liveTiles.length })} ·{" "}
           {state.ruleset.fanMinimum === 0 ? t("status.fanMin.any") : t("status.fanMin", { n: state.ruleset.fanMinimum })}
         </div>
@@ -259,25 +223,24 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
     );
   }
 
-  // A seat's discard zone in the pond: a lightly seat-tinted rectangle whose
-  // tiles grow outward. The newest discard pops in and stays highlighted.
-  function DiscardZone({ seat, wide }: { seat: number; wide: boolean }) {
+  // A seat's discard zone in the pond: a lightly seat-tinted rectangle of
+  // small tiles; the newest discard pops in and stays highlighted.
+  function DiscardZone({ seat, className = "" }: { seat: number; className?: string }) {
     const p = state.players[seat];
     const lastId = state.lastDiscard?.seat === seat ? state.lastDiscard.tile.id : null;
     return (
       <div
-        className={`flex flex-wrap content-start gap-0.5 rounded-lg border p-1 ${POND_TINT[accentOf(seat)]} ${
-          wide ? "min-h-[40px] min-w-[124px] max-w-[208px]" : "min-h-[80px] min-w-[64px] max-w-[70px]"
-        }`}
+        className={`flex flex-wrap content-start items-start justify-center gap-0.5 overflow-hidden rounded-lg border p-1 ${POND_TINT[accentOf(seat)]} ${className}`}
       >
-        {p.discards.map((t) => (
+        {p.discards.length === 0 && <span className="text-[10px] text-white/25">·</span>}
+        {p.discards.map((tile) => (
           <TileFace
-            key={t.id}
-            tile={t}
-            size="sm"
-            animateIn={t.id === lastId}
+            key={tile.id}
+            tile={tile}
+            size="xs"
+            animateIn={tile.id === lastId}
             layoutAnimate={false}
-            highlight={t.id === lastId}
+            highlight={tile.id === lastId}
           />
         ))}
       </div>
@@ -318,7 +281,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
       className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden"
       style={{ background: "radial-gradient(ellipse at center, #2a9d63 0%, #14663d 55%, #0c3f26 100%)" }}
     >
-      {/* Top-right: sound + menu (z-40 so its dropdown floats over the table). */}
+      {/* Top-right: sound + fullscreen + menu (z-40 so its dropdown floats). */}
       <div className="absolute right-3 top-2 z-40 flex items-center gap-1">
         <SoundToggle className="bg-black/30 text-emerald-100 hover:bg-black/50" />
         <FullscreenButton className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-emerald-100 hover:bg-black/50" />
@@ -347,38 +310,41 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
         )}
       </div>
 
-      {/* Band 1: top opponent */}
-      <div className="flex justify-center px-2 pt-2">
-        <Station seat={top} orient="top" />
+      {/* Band 1: top opponent, centered (kept clear of the top-right controls). */}
+      <div className="flex justify-center px-24 pt-2">
+        <OppChip seat={top} />
       </div>
 
-      {/* Band 2: left station | pond | right station. overflow-hidden so a
-          tall table clips WITHIN this band instead of spilling down over the
-          call buttons and hand. */}
-      <div className="flex min-h-0 flex-1 items-center justify-between gap-1 overflow-hidden px-1">
-        <Station seat={left} orient="left" />
-
-        <div className="grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] place-items-center gap-1.5">
-          <span />
-          <DiscardZone seat={top} wide />
-          <span />
-          <DiscardZone seat={left} wide={false} />
-          <Compass />
-          <DiscardZone seat={right} wide={false} />
-          <span />
-          <DiscardZone seat={bottom} wide />
-          <span />
+      {/* Band 2: left chip | POND | right chip. Chips live in fixed side
+          columns so they can NEVER overlap the pond; the pond gets the whole
+          flexible centre with its discards and compass fully visible. */}
+      <div className="flex min-h-0 flex-1 items-center gap-1 px-1">
+        <div className="flex w-[24%] max-w-[150px] shrink-0 items-center justify-start">
+          <OppChip seat={left} />
         </div>
 
-        <Station seat={right} orient="right" />
+        <div className="flex min-w-0 flex-1 items-center justify-center overflow-hidden">
+          <div className="flex w-full max-w-full flex-col items-center gap-1">
+            <DiscardZone seat={top} className="min-h-[26px] w-full" />
+            <div className="flex w-full items-center justify-center gap-1">
+              <DiscardZone seat={left} className="min-h-[44px] flex-1" />
+              <Compass />
+              <DiscardZone seat={right} className="min-h-[44px] flex-1" />
+            </div>
+            <DiscardZone seat={bottom} className="min-h-[26px] w-full" />
+          </div>
+        </div>
+
+        <div className="flex w-[24%] max-w-[150px] shrink-0 items-center justify-end">
+          <OppChip seat={right} />
+        </div>
       </div>
 
-      {/* Band 3: your area -- badge/bonuses, calls, hint, then the racked hand.
-          relative z-10 keeps it above the table band no matter what. */}
+      {/* Band 3: your area -- badge/bonuses, calls, hint, then the racked hand. */}
       <div className="relative z-10 flex flex-col items-center gap-1 px-2 pb-2">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Badge seat={humanSeat} />
-          <Bonuses seat={humanSeat} />
+          <Bonuses seat={humanSeat} size="sm" />
         </div>
 
         <AnimatePresence>
@@ -416,17 +382,23 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
                   {t("action.kong")}
                 </button>
               ))}
+              {/* Chi shows the two hand tiles it'll use (like the classic bar),
+                  not a wordy "Chi 2 Bamboo 3 Bamboo". */}
               {chiActions.map((a) => {
                 const [t1, t2] = (a as { tileIds: [string, string] }).tileIds
-                  .map((id) => state.players[humanSeat].concealedTiles.find((t) => t.id === id))
+                  .map((id) => state.players[humanSeat].concealedTiles.find((tt) => tt.id === id))
                   .filter(Boolean);
                 return (
                   <button
                     key={(a as { tileIds: [string, string] }).tileIds.join()}
                     onClick={() => act(a)}
-                    className="rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-3 py-2 text-xs font-bold text-white shadow"
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 py-1 pl-1.5 pr-3 text-white shadow"
                   >
-                    {t("action.chiWith", { a: t1 ? tileName(t1, lang) : "", b: t2 ? tileName(t2, lang) : "" })}
+                    <span className="flex -space-x-1">
+                      {t1 && <TileFace tile={t1} size="sm" animateIn={false} />}
+                      {t2 && <TileFace tile={t2} size="sm" animateIn={false} />}
+                    </span>
+                    <span className="text-sm font-bold">{t("action.chi")}</span>
                   </button>
                 );
               })}
@@ -457,8 +429,7 @@ export function BetaTable({ onNextRound, onNewMatch }: BetaTableProps) {
             <HandTile key={t.id} tile={t} />
           ))}
           {myDrawn && (
-            <div className="ml-2 flex flex-col items-center border-l-2 border-dashed border-amber-300/60 pl-2">
-              <span className="mb-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-200/80">{t("panel.drawn")}</span>
+            <div className="ml-1 border-l-2 border-dashed border-amber-300/60 pl-1.5">
               <HandTile tile={myDrawn} drawn />
             </div>
           )}
