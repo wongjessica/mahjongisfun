@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useGame } from "@/components/game/GameContext";
 import { useLang } from "@/components/i18n/LanguageContext";
-import { tileName, windShort } from "@/lib/i18n/labels";
+import { windShort } from "@/lib/i18n/labels";
 import { GameSpeed } from "@/components/setup/SetupForm";
 import { TileFace, TileSize } from "@/components/tiles/TileFace";
 import { Meld } from "@/lib/mahjong/melds";
@@ -243,48 +243,42 @@ export function PlayerPanel({
       )}
 
       {revealHand && (
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="flex flex-wrap gap-1">
-            <AnimatePresence>
-              {handTiles.map((tile, i) => (
-                <TileFace
-                  key={tile.id}
-                  tile={tile}
-                  size={handSize}
-                  // No layout FLIP for hand tiles: the shared-element
-                  // transition (hand <-> drawn slot <-> discard) was
-                  // occasionally stranding a tile at opacity 0, leaving an
-                  // invisible gap in the hand. Hand tiles now just fade in
-                  // and out, which can't strand them.
-                  layoutAnimate={false}
-                  selected={tile.id === selectedTileId}
-                  onClick={isHuman && onSelectTile ? () => onSelectTile(tile.id) : undefined}
-                  onDoubleClick={
-                    isHuman && onDiscardTile ? () => onDiscardTile(tile.id) : undefined
-                  }
-                  speed={speed}
-                  enterDelay={dealStagger ? i * DEAL_STAGGER_SECONDS : 0}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-
+        // Hand and the just-drawn tile share ONE wrapping row, so the drawn
+        // tile flows at the end instead of getting its own bulky, half-empty
+        // line. A slim dashed divider + its amber highlight are enough to set
+        // it apart -- no stacked "DRAWN"/name labels taking vertical space.
+        <div className="flex flex-wrap items-end gap-1">
+          <AnimatePresence>
+            {handTiles.map((tile, i) => (
+              <TileFace
+                key={tile.id}
+                tile={tile}
+                size={handSize}
+                // No layout FLIP for hand tiles: the shared-element transition
+                // (hand <-> drawn slot <-> discard) was occasionally stranding
+                // a tile at opacity 0, leaving an invisible gap in the hand.
+                layoutAnimate={false}
+                selected={tile.id === selectedTileId}
+                onClick={isHuman && onSelectTile ? () => onSelectTile(tile.id) : undefined}
+                onDoubleClick={isHuman && onDiscardTile ? () => onDiscardTile(tile.id) : undefined}
+                speed={speed}
+                enterDelay={dealStagger ? i * DEAL_STAGGER_SECONDS : 0}
+              />
+            ))}
+          </AnimatePresence>
           <AnimatePresence>
             {showDrawnSeparately && (
               <motion.div
                 key="drawn-slot"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-1 border-l-2 border-dashed border-amber-300 pl-3"
+                className="ml-1 border-l-2 border-dashed border-amber-300 pl-1.5"
+                title={t("panel.drawn")}
               >
-                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">
-                  {t("panel.drawn")}
-                </span>
                 <TileFace
                   tile={state.lastDraw!.tile}
                   size={handSize}
-                  layoutId={state.lastDraw!.tile.id}
                   selected={state.lastDraw!.tile.id === selectedTileId}
                   onClick={onSelectTile ? () => onSelectTile(state.lastDraw!.tile.id) : undefined}
                   onDoubleClick={onDiscardTile ? () => onDiscardTile(state.lastDraw!.tile.id) : undefined}
@@ -294,9 +288,6 @@ export function PlayerPanel({
                   lift={false}
                   speed={speed}
                 />
-                <span className="text-[9px] font-medium text-amber-700">
-                  {tileName(state.lastDraw!.tile, lang)}
-                </span>
               </motion.div>
             )}
           </AnimatePresence>
