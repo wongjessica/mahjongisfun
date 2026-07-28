@@ -30,17 +30,26 @@ function SeatRow({ seat, isHuman, isFirst }: { seat: number; isHuman: boolean; i
   const lastDiscardId =
     state.lastDiscard && state.lastDiscard.seat === seat ? state.lastDiscard.tile.id : null;
   const rowBorder = isFirst ? "" : "border-t border-slate-100";
+  // Mirror the hand panel's turn cue here so it's obvious whose turn it is
+  // from the discard board too: the active seat's whole row tints amber, its
+  // dot pulses, and its name goes bold amber.
+  const isActive = state.turn.activeSeat === seat && state.turn.phase !== "round-ended";
+  const activeCell = isActive ? "bg-amber-100/70" : "";
 
   return (
     <>
-      <div className={`flex items-center gap-1.5 pt-1.5 ${rowBorder}`}>
-        <span className={`h-2 w-2 shrink-0 rounded-full ${WIND_DOT[player.seatWind]}`} />
-        <span className="truncate text-xs font-semibold text-slate-600">
+      <div className={`flex items-center gap-1.5 pt-1.5 ${rowBorder} ${activeCell}`}>
+        <span
+          className={`h-2 w-2 shrink-0 rounded-full ${
+            isActive ? "animate-pulse bg-amber-400 ring-2 ring-amber-300" : WIND_DOT[player.seatWind]
+          }`}
+        />
+        <span className={`truncate text-xs ${isActive ? "font-bold text-amber-700" : "font-semibold text-slate-600"}`}>
           {isHuman ? t("common.you") : botNames[seat]}
         </span>
       </div>
       <div
-        className={`flex min-h-[2.75rem] flex-wrap items-center gap-1 border-l border-slate-200 py-1 pl-2.5 ${rowBorder}`}
+        className={`flex min-h-[2.75rem] flex-wrap items-center gap-1 border-l border-slate-200 py-1 pl-2.5 ${rowBorder} ${activeCell}`}
       >
         {player.discards.length > 0 ? (
           <AnimatePresence>
