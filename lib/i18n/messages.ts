@@ -250,6 +250,12 @@ export const MESSAGES: Record<string, Entry> = {
     "zh-Hant": "在 iPhone 上，按「分享」→「加至主畫面」，再從主畫面開啟即可全螢幕遊玩。",
     "zh-Hans": "在 iPhone 上，点「分享」→「添加到主屏幕」，再从主屏幕打开即可全屏游玩。",
   },
+  "fullscreen.iosTitle": { en: "Play fullscreen on iPhone", "zh-Hant": "在 iPhone 上全螢幕遊玩", "zh-Hans": "在 iPhone 上全屏游玩" },
+  "fullscreen.iosIntro": { en: "iPhone Safari can't make a web page fullscreen, but you can add Mahjong to your Home Screen and it opens with no Safari bars:", "zh-Hant": "iPhone Safari 無法讓網頁全螢幕，但你可以把麻雀加到主畫面，開啟時就沒有 Safari 工具列：", "zh-Hans": "iPhone Safari 无法让网页全屏，但你可以把麻将添加到主屏幕，打开时就没有 Safari 工具栏：" },
+  "fullscreen.iosStep1": { en: "Tap the Share button (the box with an ↑) in Safari's toolbar.", "zh-Hant": "按 Safari 工具列上的「分享」按鈕（帶 ↑ 的方框）。", "zh-Hans": "点 Safari 工具栏上的「分享」按钮（带 ↑ 的方框）。" },
+  "fullscreen.iosStep2": { en: "Scroll down and choose “Add to Home Screen”.", "zh-Hant": "向下捲動，選擇「加至主畫面」。", "zh-Hans": "向下滚动，选择「添加到主屏幕」。" },
+  "fullscreen.iosStep3": { en: "Open Mahjong from your Home Screen — it runs fullscreen.", "zh-Hant": "從主畫面開啟麻雀 — 即為全螢幕。", "zh-Hans": "从主屏幕打开麻将 — 即为全屏。" },
+  "common.gotIt": { en: "Got it", "zh-Hant": "知道了", "zh-Hans": "知道了" },
 };
 
 /** Look up a message in the given language, filling `{var}` placeholders.
