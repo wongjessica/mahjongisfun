@@ -150,18 +150,22 @@ export function PlayerPanel({
   return (
     <motion.div
       layout
-      // A clear, pulsing amber highlight on whoever's turn it is -- easy to
-      // spot at a glance, which the subtle static border wasn't.
-      animate={
-        isActive
-          ? { boxShadow: ["0 0 0 0 rgba(251,191,36,0.5)", "0 0 0 5px rgba(251,191,36,0.18)", "0 0 0 0 rgba(251,191,36,0.5)"] }
-          : { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
-      }
-      transition={{ duration: 1.5, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
-      className={`flex flex-col gap-1 rounded-xl border-2 p-2 backdrop-blur-sm transition-colors ${
+      className={`relative flex flex-col gap-1 rounded-xl border-2 p-2 backdrop-blur-sm transition-colors ${
         isActive ? "border-amber-400 bg-amber-50/90" : "border-white/10 bg-white/80"
       }`}
     >
+      {/* Pulsing turn glow as a SEPARATE absolutely-positioned overlay, NOT an
+          animate on this layout-enabled panel: a repeating transition on the
+          panel itself would loop its `layout` animation too, making the whole
+          hand float up and down (and impossible to tap). */}
+      {isActive && (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute -inset-px rounded-xl"
+          animate={{ boxShadow: ["0 0 0 0 rgba(251,191,36,0.5)", "0 0 12px 3px rgba(251,191,36,0.6)", "0 0 0 0 rgba(251,191,36,0.5)"] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
       <div className="flex items-center justify-between gap-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <Avatar
