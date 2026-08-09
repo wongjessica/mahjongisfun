@@ -91,17 +91,15 @@ const allTripletsPattern: FanPattern = (sets, decomposition, ctx) => {
 };
 
 // "Ping Wu" / All Sequences: all 4 sets are chows (no triplets/kongs,
-// concealed or exposed either way), and the pair isn't a dragon or the
-// holder's own seat/round wind (those are scored via dragonPattern /
-// seatRoundWindPattern instead, on a triplet -- a pair of them carries no
-// value of its own, but this pattern still requires it be an unvalued pair).
-const allSequencesPattern: FanPattern = (sets, decomposition, ctx) => {
+// concealed or exposed either way), plus any pair. The pair may be a dragon
+// or a seat/round wind -- that carries no faan of its own (dragon/wind faan
+// only comes from a TRIPLET, via dragonPattern / seatRoundWindPattern), but
+// it's a perfectly legal pair and does NOT disqualify the hand from 平糊.
+const allSequencesPattern: FanPattern = (sets, decomposition) => {
   if (decomposition.kind !== "standard") return null;
   const nonPair = sets.filter((s) => s.kind !== "pair");
   if (nonPair.length !== 4 || !nonPair.every((s) => s.kind === "sequence")) return null;
-  const pair = sets.find((s) => s.kind === "pair");
-  if (!pair || pair.suit === "dragons") return null;
-  if (pair.suit === "winds" && (pair.rank === ctx.seatWind || pair.rank === ctx.roundWind)) return null;
+  if (!sets.some((s) => s.kind === "pair")) return null;
   return { label: "All Sequences", fan: 1 };
 };
 

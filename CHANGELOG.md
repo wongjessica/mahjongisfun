@@ -83,6 +83,14 @@ Tailwind, Framer Motion**. Pinned to Next 14 / Vitest 1.6.1 for the Node
 
 ## Change log
 
+### 2026-08-09
+- **Fixed All Sequences (平糊) scoring with a value-tile pair.** A hand of four
+  sequences with a Dragon (or seat/round wind) pair was wrongly scored as a
+  0-fan chicken hand. The pair being a value tile scores no faan of its own but
+  is a legal pair and must NOT disqualify 平糊 — such a hand is 1 fan.
+  `allSequencesPattern` (`fan-table.ts`) no longer excludes dragon/value-wind
+  pairs. Updated the two scoring tests that asserted the old behavior.
+
 ### 2026-07-28
 - **Fullscreen help is browser-aware (iOS).** `FullscreenButton` detects iOS
   non-Safari browsers (`CriOS/FxiOS/EdgiOS/OPiOS`) and explains fullscreen is

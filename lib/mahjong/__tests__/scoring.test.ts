@@ -63,14 +63,16 @@ describe("scoring", () => {
     expect(result.fan).toBeGreaterThanOrEqual(1);
   });
 
-  it("does not award All Sequences when the pair is the seat or round wind", () => {
+  it("still awards All Sequences when the pair is the seat or round wind", () => {
+    // A value-tile pair (seat/round wind) is a legal pair and scores no faan
+    // of its own, but does NOT disqualify All Sequences (平糊).
     const decompositions = decomposeHand(allSequencesHand(), []);
     // allSequencesHand's pair is North Wind (rank 4).
     const bySeat = bestScore(decompositions, baseContext({ seatWind: 4 }))!;
-    expect(bySeat.breakdown.map((b) => b.label)).not.toContain("All Sequences");
+    expect(bySeat.breakdown.map((b) => b.label)).toContain("All Sequences");
 
     const byRound = bestScore(decompositions, baseContext({ roundWind: 4 }))!;
-    expect(byRound.breakdown.map((b) => b.label)).not.toContain("All Sequences");
+    expect(byRound.breakdown.map((b) => b.label)).toContain("All Sequences");
   });
 
   it("reproduces the reported hand: half flush + flower + all sequences = 5 fan", () => {
@@ -102,7 +104,10 @@ describe("scoring", () => {
     expect(result.fan).toBe(5);
   });
 
-  it("does not award All Sequences when the pair is a dragon", () => {
+  it("awards All Sequences when the pair is a dragon (the reported hand)", () => {
+    // Four sequences + a Green Dragon pair. The dragon pair scores no faan on
+    // its own (that only comes from a dragon TRIPLET), but it's a legal pair
+    // and the hand is 平糊 = 1 fan -- not a 0-fan chicken hand.
     const concealed = [
       t("characters", 1),
       t("characters", 2),
@@ -116,12 +121,19 @@ describe("scoring", () => {
       t("characters", 5),
       t("characters", 6),
       t("characters", 7),
-      t("dragons", 1),
-      t("dragons", 1),
+      t("dragons", 2),
+      t("dragons", 2),
     ];
     const decompositions = decomposeHand(concealed, []);
     const result = bestScore(decompositions, baseContext())!;
-    expect(result.breakdown.map((b) => b.label)).not.toContain("All Sequences");
+    const labels = result.breakdown.map((b) => b.label);
+    expect(labels).toContain("All Sequences");
+    // The dragon PAIR itself carries no faan (only a dragon triplet would).
+    expect(labels).not.toContain("Dragon Triplet");
+    // All Sequences contributes exactly 1 fan (any other faan here comes from
+    // context bonuses like self-draw, not the dragon pair).
+    const allSeq = result.breakdown.find((b) => b.label === "All Sequences")!;
+    expect(allSeq.fan).toBe(1);
   });
 
   it("scores seven pairs at a fixed fan value", () => {
