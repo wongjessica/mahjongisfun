@@ -182,6 +182,21 @@ describe("scoring", () => {
     expect(seqLabels).not.toContain("Terminals & Honors");
   });
 
+  it("scores an all-honors hand as All Honors only, not Terminals & Honors", () => {
+    // 字一色: pure honors (no terminals), so 混么九 must NOT also apply.
+    const allHonors = [
+      t("dragons", 1), t("dragons", 1), t("dragons", 1),
+      t("dragons", 2), t("dragons", 2), t("dragons", 2),
+      t("winds", 1), t("winds", 1), t("winds", 1),
+      t("winds", 3), t("winds", 3), t("winds", 3),
+      t("winds", 2), t("winds", 2),
+    ];
+    const result = bestScore(decomposeHand(allHonors, []), baseContext({ ruleset: createRuleset(0) }))!;
+    const labels = result.breakdown.map((b) => b.label);
+    expect(labels).toContain("All Honors");
+    expect(labels).not.toContain("Terminals & Honors");
+  });
+
   it("scores thirteen orphans at the limit", () => {
     const decompositions = decomposeHand(thirteenOrphansHand(), []);
     const ruleset = createRuleset(0);

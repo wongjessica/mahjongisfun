@@ -84,6 +84,12 @@ Tailwind, Framer Motion**. Pinned to Next 14 / Vitest 1.6.1 for the Node
 ## Change log
 
 ### 2026-08-09
+- **Fan-table audit fix: all-honors no longer double-counts 混么九.** An
+  all-honors hand (字一色) was also getting "Terminals & Honors" (混么九, +4),
+  but 混么九 requires at least one terminal (1/9) tile and a pure-honors hand
+  has none. `terminalHandsPattern` now requires a terminal for that branch.
+  (Usually hidden by the 13-fan cap, but it polluted the breakdown and the
+  qualifying-fan total.)
 - **Fixed All Sequences (平糊) scoring with a value-tile pair.** A hand of four
   sequences with a Dragon (or seat/round wind) pair was wrongly scored as a
   0-fan chicken hand. The pair being a value tile scores no faan of its own but

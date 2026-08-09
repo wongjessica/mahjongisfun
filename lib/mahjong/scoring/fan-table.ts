@@ -122,9 +122,12 @@ const terminalHandsPattern: FanPattern = (sets, decomposition, ctx) => {
   const isTerminalSet = (s: UnifiedSet) => isSuitType(s.suit) && (s.rank === 1 || s.rank === 9);
   const isHonorSet = (s: UnifiedSet) => !isSuitType(s.suit);
   if (!sets.every((s) => isTerminalSet(s) || isHonorSet(s))) return null;
-  return sets.every(isTerminalSet)
-    ? { label: "All Terminals", fan: ctx.ruleset.limitFan }
-    : { label: "Terminals & Honors", fan: 4 };
+  if (sets.every(isTerminalSet)) return { label: "All Terminals", fan: ctx.ruleset.limitFan };
+  // "Terminals & Honors" (混么九) requires BOTH a terminal and an honor. A
+  // pure-honors hand has no terminal -- it's 字一色 (All Honors), scored on its
+  // own, and must not also pick up this pattern.
+  if (!sets.some(isTerminalSet)) return null;
+  return { label: "Terminals & Honors", fan: 4 };
 };
 
 const sevenPairsPattern: FanPattern = (_sets, decomposition) =>
